@@ -1,278 +1,164 @@
 <?php
 
-include '../includes/config.php';
+include '../database/connection.php';
 include '../includes/auth.php';
 include '../includes/functions.php';
 
 require_role('admin');
 
 
-$page_title = "Debtors Report";
 
-
-include '../includes/header.php';
-include '../includes/navbar.php';
-
-
-?>
-
-
-<div class="container-fluid">
-
-<div class="row">
-
-
-<?php include '../includes/admin_sidebar.php'; ?>
-
-
-<div class="col-md-10 p-4">
-
-
-<h2 class="mb-4">
-
-Students With Outstanding Balances
-
-</h2>
-
-
-
-<div class="card shadow">
-
-
-<div class="card-header bg-danger text-white">
-
-Debtors List
-
-</div>
-
-
-<div class="card-body">
-
-
-<table class="table table-bordered table-striped">
-
-
-<thead>
-
-<tr>
-
-<th>#</th>
-
-<th>Student</th>
-
-<th>Registration No</th>
-
-<th>Period</th>
-
-<th>Total Fees</th>
-
-<th>Paid</th>
-
-<th>Balance</th>
-
-<th>Status</th>
-
-<th>Action</th>
-
-</tr>
-
-</thead>
-
-
-
-<tbody>
-
-
-<?php
-
-
-$query=mysqli_query(
-
+$result = mysqli_query(
 $conn,
-
 
 "SELECT
 
-sf.student_fee_id,
+student_fees.student_fee_id,
 
-sf.total_amount,
+students.full_name,
 
-sf.amount_paid,
+students.reg_no,
 
-sf.balance,
-
-sf.status,
+students.class,
 
 
-s.full_name,
+academic_periods.academic_year,
 
-s.reg_no,
-
-
-a.academic_year,
-
-a.period_name
+academic_periods.period_name,
 
 
-FROM student_fees sf
+student_fees.total_amount,
+
+student_fees.amount_paid,
+
+student_fees.balance,
+
+student_fees.status
 
 
-JOIN students s
-
-ON sf.student_id=s.student_id
+FROM student_fees
 
 
-JOIN academic_periods a
+JOIN students
 
-ON sf.period_id=a.period_id
-
-
-WHERE sf.balance > 0
+ON student_fees.student_id = students.student_id
 
 
-ORDER BY sf.balance DESC"
+JOIN academic_periods
+
+ON student_fees.period_id = academic_periods.period_id
+
+
+WHERE student_fees.balance > 0
+
+
+ORDER BY students.class, students.full_name"
 
 );
 
 
 
-$count=1;
-
-
-
-while($row=mysqli_fetch_assoc($query)){
+$total_debt = 0;
 
 
 ?>
 
 
-<tr>
+<!DOCTYPE html>
 
+<html>
 
-<td>
+<head>
 
-<?= $count++; ?>
 
-</td>
+<title>
+Debtors Report
+</title>
 
 
+<link
 
-<td>
+href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css"
 
-<?= e($row['full_name']); ?>
+rel="stylesheet">
 
-</td>
 
 
+<style>
 
-<td>
 
-<?= e($row['reg_no']); ?>
+body{
 
-</td>
+background:#f5f6fa;
 
+}
 
 
-<td>
 
-<?= e($row['academic_year']); ?>
+.card{
 
--
+border:none;
 
-<?= e($row['period_name']); ?>
+border-radius:15px;
 
-</td>
+box-shadow:0 4px 15px rgba(0,0,0,.08);
 
+}
 
 
-<td>
 
-<?= number_format($row['total_amount']); ?>
+@media print{
 
-</td>
 
+.btn{
 
+display:none;
 
-<td>
+}
 
-<?= number_format($row['amount_paid']); ?>
 
-</td>
+body{
 
+background:white;
 
+}
 
-<td class="text-danger">
 
-<?= number_format($row['balance']); ?>
+.card{
 
-</td>
+box-shadow:none;
 
+}
 
 
-<td>
+}
 
 
-<?php if($row['status']=="Partial"){ ?>
+</style>
 
-<span class="badge bg-warning">
 
-Partial
 
-</span>
+</head>
 
 
-<?php }else{ ?>
+<body>
 
 
-<span class="badge bg-danger">
+<div class="container-fluid p-4">
 
-Pending
 
-</span>
 
+<div class="d-flex justify-content-between align-items-center mb-4">
 
-<?php } ?>
 
+<h2>
 
-</td>
+📌 Debtors Report
 
+</h2>
 
 
-<td>
-
-
-<a href="student_statement.php?id=<?= $row['student_fee_id']; ?>"
-
-class="btn btn-sm btn-info">
-
-Statement
-
-</a>
-
-
-</td>
-
-
-</tr>
-
-
-
-<?php } ?>
-
-
-</tbody>
-
-
-</table>
-
-
-</div>
-
-
-</div>
-
-
-<br>
+<div>
 
 
 <button
@@ -281,7 +167,7 @@ onclick="window.print()"
 
 class="btn btn-dark">
 
-Print Debtors List
+Print
 
 </button>
 
@@ -289,10 +175,229 @@ Print Debtors List
 
 </div>
 
-</div>
 
 </div>
 
 
 
-<?php include '../includes/footer.php'; ?>
+
+<div class="card">
+
+
+
+<div class="card-header bg-danger text-white">
+
+Students With Outstanding Fees
+
+</div>
+
+
+
+
+<div class="card-body">
+
+
+
+<table class="table table-bordered table-striped">
+
+
+<thead class="table-dark">
+
+
+<tr>
+
+
+<th>
+Student
+</th>
+
+
+<th>
+Class
+</th>
+
+
+<th>
+Academic Period
+</th>
+
+
+<th>
+Total Fees
+</th>
+
+
+<th>
+Paid
+</th>
+
+
+<th>
+Balance
+</th>
+
+
+<th>
+Status
+</th>
+
+
+</tr>
+
+
+</thead>
+
+
+
+<tbody>
+
+
+<?php while($row=mysqli_fetch_assoc($result)): ?>
+
+
+<?php
+
+$total_debt += $row['balance'];
+
+?>
+
+
+<tr>
+
+
+<td>
+
+<?=e($row['full_name']);?>
+
+<br>
+
+<small>
+
+<?=e($row['reg_no']);?>
+
+</small>
+
+</td>
+
+
+
+
+<td>
+
+<?=e($row['class']);?>
+
+</td>
+
+
+
+
+<td>
+
+<?=e($row['academic_year']);?>
+
+-
+
+<?=e($row['period_name']);?>
+
+</td>
+
+
+
+
+<td>
+
+<?=number_format($row['total_amount'],2);?>
+
+</td>
+
+
+
+
+<td>
+
+<?=number_format($row['amount_paid'],2);?>
+
+</td>
+
+
+
+
+<td class="text-danger fw-bold">
+
+<?=number_format($row['balance'],2);?>
+
+</td>
+
+
+
+
+<td>
+
+<?=e($row['status']);?>
+
+</td>
+
+
+
+</tr>
+
+
+
+<?php endwhile; ?>
+
+
+</tbody>
+
+
+
+<tfoot>
+
+
+<tr>
+
+
+<th colspan="5">
+
+TOTAL OUTSTANDING
+
+</th>
+
+
+<th class="text-danger">
+
+
+<?=number_format($total_debt,2);?>
+
+
+</th>
+
+
+<th>
+
+
+</th>
+
+
+</tr>
+
+
+</tfoot>
+
+
+</table>
+
+
+
+</div>
+
+
+</div>
+
+
+
+</div>
+
+
+</body>
+
+</html>

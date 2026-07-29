@@ -1,82 +1,40 @@
 <?php
 
-include '../includes/config.php';
+include '../database/connection.php';
 include '../includes/auth.php';
 include '../includes/functions.php';
 
 require_role('admin');
 
 
-$page_title = "Fee Items";
+$message="";
 
 
-include '../includes/header.php';
-include '../includes/navbar.php';
+// ADD FEE ITEM
 
-
-
-$message = "";
-$message_type = "success";
-
-
-
-// SAVE FEE ITEM
-
-if(isset($_POST['save_item'])){
+if(isset($_POST['save'])){
 
 
     $item_name = trim($_POST['item_name']);
-
     $description = trim($_POST['description']);
 
 
+    if($item_name==""){
 
-    // Check duplicate
+        $message="Fee name is required";
 
-
-    $check = mysqli_prepare(
-        $conn,
-        "SELECT item_id
-         FROM fee_items
-         WHERE item_name=?"
-    );
+    }
+    else{
 
 
-    mysqli_stmt_bind_param(
-        $check,
-        "s",
-        $item_name
-    );
-
-
-    mysqli_stmt_execute($check);
-
-
-    $result = mysqli_stmt_get_result($check);
-
-
-
-    if(mysqli_num_rows($result) > 0){
-
-
-        $message = "This fee item already exists.";
-
-        $message_type = "danger";
-
-
-    }else{
-
-
-        $stmt = mysqli_prepare(
+        $stmt=mysqli_prepare(
             $conn,
             "INSERT INTO fee_items
             (
                 item_name,
-                description,
-                status
+                description
             )
-            VALUES
-            (?,?, 'Active')"
+            VALUES(?,?)"
         );
 
 
@@ -88,66 +46,65 @@ if(isset($_POST['save_item'])){
         );
 
 
-
-        if(mysqli_stmt_execute($stmt)){
-
-
-            log_activity(
-                $conn,
-                $_SESSION['user_id'],
-                "Created fee item ".$item_name
-            );
+        mysqli_stmt_execute($stmt);
 
 
-            $message = "Fee item added successfully.";
-
-
-        }else{
-
-
-            $message = "Failed to add fee item.";
-
-            $message_type = "danger";
-
-        }
-
+        $message="Fee item added successfully";
 
     }
+
 
 }
 
 
 
+// GET ITEMS
+
+$result=mysqli_query(
+    $conn,
+    "SELECT *
+     FROM fee_items
+     ORDER BY item_id DESC"
+);
+
+
 ?>
 
 
+<!DOCTYPE html>
 
-<div class="container-fluid">
+<html>
 
-<div class="row">
+<head>
 
-
-<?php include '../includes/admin_sidebar.php'; ?>
-
-
-<div class="col-md-10 p-4">
+<title>Fee Items</title>
 
 
+<link 
+href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css"
+rel="stylesheet">
 
-<h2 class="mb-4">
 
-Fee Items
+</head>
 
+
+<body>
+
+
+<div class="container-fluid p-4">
+
+
+<h2>
+💰 Fee Items Management
 </h2>
-
 
 
 
 <?php if($message): ?>
 
-<div class="alert alert-<?= $message_type ?>">
+<div class="alert alert-success">
 
-<?= e($message); ?>
+<?=e($message);?>
 
 </div>
 
@@ -156,7 +113,7 @@ Fee Items
 
 
 
-<div class="card shadow">
+<div class="card mb-4">
 
 
 <div class="card-header bg-primary text-white">
@@ -164,7 +121,6 @@ Fee Items
 Add New Fee Item
 
 </div>
-
 
 
 <div class="card-body">
@@ -176,26 +132,19 @@ Add New Fee Item
 <div class="row">
 
 
-<div class="col-md-5">
+<div class="col-md-4">
 
 
-<label class="form-label">
-
+<label>
 Fee Name
-
 </label>
 
 
-<input
-
+<input 
 type="text"
-
 name="item_name"
-
 class="form-control"
-
 placeholder="Example: Tuition"
-
 required>
 
 
@@ -203,25 +152,18 @@ required>
 
 
 
+<div class="col-md-6">
 
-<div class="col-md-5">
 
-
-<label class="form-label">
-
+<label>
 Description
-
 </label>
 
 
-<input
-
+<input 
 type="text"
-
 name="description"
-
 class="form-control"
-
 placeholder="Optional description">
 
 
@@ -229,15 +171,12 @@ placeholder="Optional description">
 
 
 
-
-<div class="col-md-2 d-flex align-items-end">
+<div class="col-md-2 mt-4">
 
 
 <button
-
-class="btn btn-success w-100"
-
-name="save_item">
+name="save"
+class="btn btn-success w-100">
 
 Save
 
@@ -245,7 +184,6 @@ Save
 
 
 </div>
-
 
 
 </div>
@@ -263,7 +201,8 @@ Save
 
 
 
-<div class="card shadow mt-4">
+
+<div class="card">
 
 
 <div class="card-header bg-dark text-white">
@@ -273,58 +212,31 @@ Existing Fee Items
 </div>
 
 
-
 <div class="card-body">
 
 
 <table class="table table-bordered">
 
 
-<thead>
-
 <tr>
 
-<th>#</th>
+<th>
+Name
+</th>
 
-<th>Fee Name</th>
+<th>
+Description
+</th>
 
-<th>Description</th>
-
-<th>Status</th>
+<th>
+Status
+</th>
 
 </tr>
 
-</thead>
 
 
-
-<tbody>
-
-
-<?php
-
-
-$items = mysqli_query(
-
-$conn,
-
-"SELECT *
-
-FROM fee_items
-
-ORDER BY item_id DESC"
-
-);
-
-
-
-$count = 1;
-
-
-while($row=mysqli_fetch_assoc($items)){
-
-
-?>
+<?php while($row=mysqli_fetch_assoc($result)): ?>
 
 
 <tr>
@@ -332,53 +244,21 @@ while($row=mysqli_fetch_assoc($items)){
 
 <td>
 
-<?= $count++; ?>
+<?=e($row['item_name']);?>
 
 </td>
 
 
-
 <td>
 
-<?= e($row['item_name']); ?>
+<?=e($row['description']);?>
 
 </td>
 
 
-
 <td>
 
-<?= e($row['description']); ?>
-
-</td>
-
-
-
-<td>
-
-
-<?php if($row['status']=="Active"){ ?>
-
-
-<span class="badge bg-success">
-
-Active
-
-</span>
-
-
-<?php }else{ ?>
-
-
-<span class="badge bg-secondary">
-
-Inactive
-
-</span>
-
-
-<?php } ?>
-
+<?=e($row['status']);?>
 
 </td>
 
@@ -386,10 +266,7 @@ Inactive
 </tr>
 
 
-<?php } ?>
-
-
-</tbody>
+<?php endwhile; ?>
 
 
 </table>
@@ -405,11 +282,6 @@ Inactive
 </div>
 
 
-</div>
+</body>
 
-
-</div>
-
-
-
-<?php include '../includes/footer.php'; ?>
+</html>

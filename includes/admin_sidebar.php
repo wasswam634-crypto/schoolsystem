@@ -78,9 +78,56 @@ $school = mysqli_fetch_assoc($school_query);
                 
 
         <li class="nav-item">
-        <a href="academic_periods.php" class="nav-link">
+        <a href="academic_periods.php" class="nav-link text-white">
         📅 Academic Periods
         </a>
+</li>
+
+
+<!-- FEES MANAGEMENT -->
+
+<li class="nav-item mb-2">
+
+    <span class="text-muted small">
+        FINANCE
+    </span>
+
+</li>
+
+
+<li class="nav-item mb-2">
+
+<a href="fee_structure.php" class="nav-link text-white">
+
+💰 Fee Structure
+
+</a>
+
+</li>
+
+
+
+<li class="nav-item mb-2">
+
+<a href="generate_student_fees.php" class="nav-link text-white">
+
+🧾 Generate Student Fees
+
+</a>
+
+</li>
+
+
+
+
+<li class="nav-item mb-2">
+
+<a href="fee_payments.php" class="nav-link text-white">
+
+💵 Fee Payments
+
+</a>
+
 </li>
 
             <li class="nav-item mb-2">
