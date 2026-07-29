@@ -1,0 +1,167 @@
+
+
+body{
+
+font-family:'Poppins',sans-serif;
+
+background:var(--background-color) !important;
+
+}
+
+
+
+.navbar{
+
+background:var(--primary-color) !important;
+
+}
+
+
+
+.nav-link{
+
+color:white!important;
+
+}
+
+
+
+.nav-link:hover{
+
+color:var(--secondary-color)!important;
+
+}
+
+
+
+.hero{
+
+background:
+
+linear-gradient(
+rgba(0,0,0,.55),
+rgba(0,0,0,.55)
+),
+
+url('../../assets/images/university.jpg');
+
+}
+
+
+
+.btn-primary{
+
+background:var(--secondary-color);
+
+color:white;
+
+border:none;
+
+}
+
+
+
+.section-title{
+
+color:var(--primary-color) !important;
+
+}
+
+
+
+.section-title:after{
+
+background:var(--secondary-color) !important;
+
+}
+
+
+
+.card:hover{
+
+border-top:4px solid var(--secondary-color) !important;
+
+}
+
+
+
+footer{
+
+background:var(--primary-color) !important;
+
+} 
+nav
+
+.navbar .school-logo {
+    width: clamp(60px, 8vw, 120px);
+    height: clamp(60px, 8vw, 120px);
+    max-width: 120px;
+    object-fit: contain;
+    display: block;
+}
+
+.navbar .nav-link {
+    color: white !important;
+    font-weight: 500;
+}
+
+
+.navbar .nav-link:hover {
+    color: var(--secondary-color) !important;
+}
+
+
+
+/* School Logo */
+.navbar .school-logo {
+    width: clamp(70px, 8vw, 110px);
+    height: clamp(70px, 8vw, 110px);
+    object-fit: contain;
+    display: block;
+    margin-right: 12px;
+}
+
+/* Brand spacing */
+.navbar-brand {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+/* School name */
+.navbar-brand strong {
+    font-size: 1.3rem;
+    color: #fff;
+}
+
+/* Motto */
+.navbar-brand small {
+    font-size: 0.85rem;
+    color: rgba(255,255,255,0.85);
+}
+
+.navbar .nav-link {
+    white-space: nowrap;
+}
+
+@media(max-width:992px){
+
+    .navbar-brand strong{
+        font-size:1rem;
+    }
+
+
+    .navbar-brand small{
+        font-size:.7rem;
+    }
+
+
+    .navbar .school-logo{
+
+        width:60px;
+        height:60px;
+
+    }
+
+}
+

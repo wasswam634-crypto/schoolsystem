@@ -1,0 +1,145 @@
+/* MODERN NAVBAR */
+
+
+.navbar{
+
+backdrop-filter:blur(10px);
+
+box-shadow:0 5px 20px rgba(0,0,0,.15);
+
+}
+
+
+footer{
+
+background:var(--primary-color) !important;
+
+} 
+
+
+.section-title{
+
+color:var(--primary-color) !important;
+
+}
+
+
+.school-logo{
+
+width:65px;
+
+height:65px;
+
+object-fit:contain;
+
+background:white;
+
+padding:5px;
+
+border-radius:50%;
+
+}
+
+
+
+.school-name strong{
+
+font-size:18px;
+
+}
+
+
+
+.school-name small{
+
+font-size:12px;
+
+opacity:.9;
+
+}
+
+
+
+.nav-link{
+
+font-weight:500;
+
+margin:0 8px;
+
+transition:.3s;
+
+}
+
+
+
+.nav-link:hover{
+
+color:var(--secondary-color)!important;
+
+transform:translateY(-2px);
+
+}
+
+
+
+
+.portal-btn{
+
+background:var(--secondary-color) !important;
+
+color:white!important;
+
+padding:10px 22px;
+
+border-radius:25px;
+
+font-weight:600;
+
+text-decoration:none;
+
+transition:.3s;
+
+}
+
+
+
+.portal-btn:hover{
+
+background:white;
+
+color:var(--primary-color)!important;
+
+}
+
+.school-logo {
+    width: clamp(50px, 8vw, 100px);
+    height: clamp(50px, 8vw, 100px);
+    object-fit: contain;
+}
+
+
+.navbar .nav-link {
+    white-space: nowrap;
+}
+
+@media(max-width:992px){
+
+    .navbar-brand strong{
+        font-size:1rem;
+    }
+
+
+    .navbar-brand small{
+        font-size:.7rem;
+    }
+
+
+    .navbar .school-logo{
+
+        width:60px;
+        height:60px;
+
+    }
+
+}
+
