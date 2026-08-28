@@ -1,3 +1,4 @@
+```php
 <?php
 
 include '../database/connection.php';
@@ -6,88 +7,80 @@ include '../includes/functions.php';
 
 require_role('admin');
 
-$deleted = $_GET['deleted'] ?? '';
+
+/*
+|--------------------------------------------------------------------------
+| DELETE TIMETABLE
+|--------------------------------------------------------------------------
+*/
+
+if (isset($_POST['delete_timetable'])) {
+
+    $class = trim($_POST['class'] ?? '');
+    $year  = trim($_POST['year'] ?? '');
+    $term  = trim($_POST['term'] ?? '');
 
 
+    /*
+    |--------------------------------------------------------------------------
+    | Validate details
+    |--------------------------------------------------------------------------
+    */
 
-$class = $_GET['class'] ?? '';
+    if ($class === '' || $year === '' || $term === '') {
 
-$year = $_GET['year'] ?? '';
+        set_error("Invalid timetable details.");
 
-$term = $_GET['term'] ?? '';
-
-
-
-
-
-if($class && $year && $term){
-
-
-
-$stmt = mysqli_prepare(
-
-$conn,
-
-"DELETE FROM timetables
-
-WHERE class=?
-
-AND academic_year=?
-
-AND term=?"
-
-);
+        redirect("timetables.php");
+    }
 
 
+    /*
+    |--------------------------------------------------------------------------
+    | Delete timetable
+    |--------------------------------------------------------------------------
+    */
 
-mysqli_stmt_bind_param(
+    $stmt = mysqli_prepare(
+        $conn,
 
-$stmt,
-
-"sss",
-
-$class,
-
-$year,
-
-$term
-
-);
-
-
-
-if(mysqli_stmt_execute($stmt)){
+        "DELETE FROM timetables
+         WHERE class = ?
+         AND academic_year = ?
+         AND term = ?"
+    );
 
 
-
-header(
-"Location: timetables.php?deleted=1"
-);
-
-exit;
-
-
-
-}else{
+    mysqli_stmt_bind_param(
+        $stmt,
+        "sss",
+        $class,
+        $year,
+        $term
+    );
 
 
+    if (mysqli_stmt_execute($stmt)) {
 
-echo "Failed to delete timetable.";
+        set_success("Timetable deleted successfully.");
+
+    } else {
+
+        set_error(
+            "Failed to delete timetable: "
+            . mysqli_stmt_error($stmt)
+        );
+    }
 
 
+    /*
+    |--------------------------------------------------------------------------
+    | Redirect after POST
+    |--------------------------------------------------------------------------
+    */
+
+    redirect("timetables.php");
 }
-
-
-
-}else{
-
-
-
-echo "Invalid timetable details.";
-
-
-
-}
-
 
 ?>
+```

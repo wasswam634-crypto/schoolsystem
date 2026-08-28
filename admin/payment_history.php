@@ -7,26 +7,102 @@ include '../includes/functions.php';
 require_role('admin');
 
 
+/*
+=================================
+FILTERS
+=================================
+*/
 
-$result = mysqli_query(
+$search = $_GET['search'] ?? "";
+
+$date_from = $_GET['date_from'] ?? "";
+
+$date_to = $_GET['date_to'] ?? "";
+
+
+
+$where = [];
+
+
+
+if($search!=""){
+
+    $search=mysqli_real_escape_string(
+        $conn,
+        $search
+    );
+
+
+    $where[]="
+    (
+        students.full_name LIKE '%$search%'
+        OR students.reg_no LIKE '%$search%'
+        OR fee_payments.receipt_number LIKE '%$search%'
+    )
+    ";
+
+}
+
+
+
+if($date_from!=""){
+
+    $where[]="
+    fee_payments.payment_date >= '$date_from'
+    ";
+
+}
+
+
+
+if($date_to!=""){
+
+    $where[]="
+    fee_payments.payment_date <= '$date_to'
+    ";
+
+}
+
+
+
+$where_sql="";
+
+
+if(count($where)>0){
+
+    $where_sql="WHERE ".implode(
+        " AND ",
+        $where
+    );
+
+}
+
+
+
+
+/*
+=================================
+GET PAYMENT HISTORY
+=================================
+*/
+
+
+$result=mysqli_query(
+
 $conn,
+
 
 "SELECT
 
-fee_payments.payment_id,
 
-fee_payments.receipt_number,
-
-fee_payments.amount,
-
-fee_payments.payment_date,
-
-fee_payments.payment_method,
+fee_payments.*,
 
 
 students.full_name,
 
 students.reg_no,
+
+students.class,
 
 
 academic_periods.academic_year,
@@ -34,7 +110,9 @@ academic_periods.academic_year,
 academic_periods.period_name
 
 
+
 FROM fee_payments
+
 
 
 JOIN student_fees
@@ -43,10 +121,12 @@ ON fee_payments.student_fee_id =
 student_fees.student_fee_id
 
 
+
 JOIN students
 
 ON student_fees.student_id =
 students.student_id
+
 
 
 JOIN academic_periods
@@ -55,21 +135,53 @@ ON student_fees.period_id =
 academic_periods.period_id
 
 
-ORDER BY fee_payments.payment_id DESC"
+
+$where_sql
+
+
+ORDER BY payment_id DESC"
 
 );
+
+
+
+
+
+/*
+TOTAL COLLECTION
+*/
+
+
+$total=mysqli_query(
+
+$conn,
+
+
+"SELECT SUM(amount) AS total
+
+FROM fee_payments
+
+$where_sql"
+
+);
+
+
+$total_row=mysqli_fetch_assoc($total);
+
+$total_amount=$total_row['total'] ?? 0;
 
 
 
 ?>
 
 
+
 <!DOCTYPE html>
 
 <html>
 
-
 <head>
+
 
 <title>
 Payment History
@@ -110,6 +222,7 @@ box-shadow:0 4px 15px rgba(0,0,0,.08);
 </head>
 
 
+
 <body>
 
 
@@ -117,14 +230,13 @@ box-shadow:0 4px 15px rgba(0,0,0,.08);
 
 
 
-<div class="d-flex justify-content-between align-items-center mb-4">
+<div class="d-flex justify-content-between">
 
 
 <h2>
-
 💳 Payment History
-
 </h2>
+
 
 
 <a href="fee_payments.php"
@@ -141,19 +253,127 @@ Receive Payment
 
 
 
+<div class="alert alert-success mt-3">
 
-<div class="card">
+Total Collected:
 
+<strong>
 
-<div class="card-header bg-dark text-white">
+UGX <?=number_format($total_amount);?>
 
-All Payments
+</strong>
 
 </div>
 
 
+
+
+
+<div class="card mb-4">
+
+
 <div class="card-body">
 
+
+<form method="GET">
+
+
+<div class="row">
+
+
+<div class="col-md-4">
+
+
+<input
+
+class="form-control"
+
+name="search"
+
+placeholder="Search student or receipt"
+
+value="<?=e($search);?>">
+
+
+</div>
+
+
+
+
+<div class="col-md-3">
+
+
+<input
+
+type="date"
+
+class="form-control"
+
+name="date_from"
+
+value="<?=e($date_from);?>">
+
+
+</div>
+
+
+
+
+<div class="col-md-3">
+
+
+<input
+
+type="date"
+
+class="form-control"
+
+name="date_to"
+
+value="<?=e($date_to);?>">
+
+
+</div>
+
+
+
+
+<div class="col-md-2">
+
+
+<button
+
+class="btn btn-dark w-100">
+
+Filter
+
+</button>
+
+
+</div>
+
+
+</div>
+
+
+</form>
+
+
+</div>
+
+
+</div>
+
+
+
+
+
+
+
+<div class="card">
+
+
+<div class="card-body">
 
 
 <table class="table table-bordered table-striped">
@@ -166,12 +386,17 @@ All Payments
 
 
 <th>
-Receipt No
+Receipt
 </th>
 
 
 <th>
 Student
+</th>
+
+
+<th>
+Class
 </th>
 
 
@@ -187,6 +412,11 @@ Amount
 
 <th>
 Method
+</th>
+
+
+<th>
+Reference
 </th>
 
 
@@ -207,8 +437,8 @@ Action
 
 
 
-
 <tbody>
+
 
 
 <?php while($row=mysqli_fetch_assoc($result)): ?>
@@ -217,11 +447,13 @@ Action
 <tr>
 
 
+
 <td>
 
 <?=e($row['receipt_number']);?>
 
 </td>
+
 
 
 
@@ -238,29 +470,44 @@ Action
 
 </small>
 
+
 </td>
+
+
 
 
 
 
 <td>
 
-<?=e($row['academic_year']);?>
+<?=e($row['class']);?>
+
+</td>
+
+
+
+
+
+<td>
+
+<?=$row['academic_year'];?>
 
 -
 
-<?=e($row['period_name']);?>
+<?=$row['period_name'];?>
 
 </td>
+
 
 
 
 
 <td>
 
-<?=number_format($row['amount'],2);?>
+UGX <?=number_format($row['amount']);?>
 
 </td>
+
 
 
 
@@ -274,6 +521,17 @@ Action
 
 
 
+
+<td>
+
+<?=e($row['reference_number']);?>
+
+</td>
+
+
+
+
+
 <td>
 
 <?=e($row['payment_date']);?>
@@ -283,30 +541,25 @@ Action
 
 
 
+
 <td>
-
-
 <a
 
 href="payment_receipt.php?id=<?=$row['payment_id'];?>"
 
 class="btn btn-success btn-sm">
 
-
 🖨 Receipt
 
-
 </a>
-
 
 </td>
 
 
 </tr>
 
-
-
 <?php endwhile; ?>
+
 
 
 </tbody>

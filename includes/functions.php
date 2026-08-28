@@ -67,6 +67,48 @@ function get_section($conn, $page, $key)
 }
 
 
+/* ================================
+   FLASH SUCCESS MESSAGE
+   ================================ */
+
+function set_success($message)
+{
+    $_SESSION['success_message'] = $message;
+}
+
+
+function get_success()
+{
+    $message = $_SESSION['success_message'] ?? null;
+
+    unset($_SESSION['success_message']);
+
+    return $message;
+}
+
+
+/* ================================
+   FLASH ERROR MESSAGE
+   ================================ */
+
+function set_error($message)
+{
+    $_SESSION['error_message'] = $message;
+}
+
+
+function get_error()
+{
+    $message = $_SESSION['error_message'] ?? null;
+
+    unset($_SESSION['error_message']);
+
+    return $message;
+}
+
+
+
+
 
 ?>
 

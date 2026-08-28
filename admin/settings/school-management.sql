@@ -557,7 +557,7 @@ INSERT INTO `vacancies` (`vacancy_id`, `title`, `department`, `description`, `de
 (2, 'vaaaaaaaaaaaaaaaaaaaa', 'vaaaaaaaaaaaaaaaaaaaa', 'vaaaaaaaaaaaaaaaaaaaavaaaaaaaaaaaaaaaaaaaavaaaaaaaaaaaaaaaaaaaa', '2222-02-22', 'open', '2026-07-19 11:43:52');
 
 -- --------------------------------------------------------
-
+9
 --
 -- Table structure for table `website_sections`
 --
