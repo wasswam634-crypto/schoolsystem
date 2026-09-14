@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: 127.0.0.1
--- Generation Time: Jul 29, 2026 at 11:53 AM
+-- Generation Time: Sep 14, 2026 at 07:22 PM
 -- Server version: 10.4.32-MariaDB
 -- PHP Version: 8.2.12
 
@@ -32,15 +32,18 @@ CREATE TABLE `academic_groups` (
   `group_name` varchar(100) NOT NULL,
   `group_type` enum('Class','Course','Department') DEFAULT 'Class',
   `status` enum('Active','Inactive') DEFAULT 'Active',
-  `created_at` timestamp NOT NULL DEFAULT current_timestamp()
+  `created_at` timestamp NOT NULL DEFAULT current_timestamp(),
+  `report_profile_id` int(11) DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
 -- Dumping data for table `academic_groups`
 --
 
-INSERT INTO `academic_groups` (`group_id`, `group_name`, `group_type`, `status`, `created_at`) VALUES
-(1, 's6', 'Class', 'Active', '2026-07-25 20:24:17');
+INSERT INTO `academic_groups` (`group_id`, `group_name`, `group_type`, `status`, `created_at`, `report_profile_id`) VALUES
+(1, 's6', 'Class', 'Active', '2026-07-25 20:24:17', NULL),
+(2, '23', 'Class', 'Active', '2026-09-08 14:00:31', NULL),
+(3, 'cs', 'Class', 'Active', '2026-09-08 14:00:42', NULL);
 
 -- --------------------------------------------------------
 
@@ -66,7 +69,51 @@ INSERT INTO `academic_periods` (`period_id`, `academic_year`, `period_name`, `st
 (1, '2026', 'Term 1', '2026-02-01', '2026-05-01', 'Closed', '2026-07-25 09:58:52'),
 (2, '2026', 'semester 2', '2026-10-10', '2026-12-10', 'Closed', '2026-07-27 10:36:17'),
 (3, '2026', 'semester 1', '2026-01-01', '2026-04-30', 'Closed', '2026-07-27 13:55:25'),
-(4, '2026', 'semester 2', '2026-09-03', '2026-12-03', 'Active', '2026-07-27 14:23:11');
+(4, '2026', 'semester 2', '2026-09-03', '2026-12-03', 'Closed', '2026-07-27 14:23:11'),
+(5, '2026', 'sem3', '2026-12-12', '2027-12-12', 'Active', '2026-09-08 13:20:29');
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `academic_subjects`
+--
+
+CREATE TABLE `academic_subjects` (
+  `academic_subject_id` int(11) NOT NULL,
+  `period_id` int(11) NOT NULL,
+  `group_id` int(11) NOT NULL,
+  `subject_id` int(11) NOT NULL,
+  `teacher_id` int(11) DEFAULT NULL,
+  `status` enum('Active','Inactive') DEFAULT 'Active',
+  `created_at` timestamp NOT NULL DEFAULT current_timestamp()
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+--
+-- Dumping data for table `academic_subjects`
+--
+
+INSERT INTO `academic_subjects` (`academic_subject_id`, `period_id`, `group_id`, `subject_id`, `teacher_id`, `status`, `created_at`) VALUES
+(1, 5, 1, 2, NULL, 'Active', '2026-09-11 04:18:01'),
+(2, 3, 1, 1, NULL, 'Active', '2026-09-11 19:11:07'),
+(3, 3, 1, 2, NULL, 'Active', '2026-09-11 19:11:07'),
+(4, 3, 1, 3, NULL, 'Active', '2026-09-11 19:11:07'),
+(5, 2, 1, 1, NULL, 'Active', '2026-09-11 19:11:07'),
+(6, 4, 1, 1, NULL, 'Active', '2026-09-11 19:11:07'),
+(7, 2, 1, 2, NULL, 'Active', '2026-09-11 19:11:07'),
+(8, 4, 1, 2, NULL, 'Active', '2026-09-11 19:11:07'),
+(9, 2, 1, 3, NULL, 'Active', '2026-09-11 19:11:07'),
+(10, 4, 1, 3, NULL, 'Active', '2026-09-11 19:11:07'),
+(11, 2, 3, 1, NULL, 'Active', '2026-09-11 19:11:07'),
+(12, 3, 3, 1, NULL, 'Active', '2026-09-11 19:11:07'),
+(13, 5, 3, 1, NULL, 'Active', '2026-09-11 19:11:07'),
+(14, 2, 3, 2, NULL, 'Active', '2026-09-11 19:11:07'),
+(15, 3, 3, 2, NULL, 'Active', '2026-09-11 19:11:07'),
+(16, 5, 3, 2, NULL, 'Active', '2026-09-11 19:11:07'),
+(17, 2, 3, 3, NULL, 'Active', '2026-09-11 19:11:07'),
+(18, 3, 3, 3, NULL, 'Active', '2026-09-11 19:11:07'),
+(19, 5, 3, 3, NULL, 'Active', '2026-09-11 19:11:07'),
+(20, 5, 1, 5, 2, 'Active', '2026-09-13 09:25:38'),
+(21, 5, 1, 6, 3, 'Active', '2026-09-13 09:48:16');
 
 -- --------------------------------------------------------
 
@@ -142,7 +189,22 @@ INSERT INTO `audit_logs` (`log_id`, `user_id`, `action`, `created_at`) VALUES
 (6, 1, 'Updated fee payment for student ID 5', '2026-07-25 09:25:02'),
 (7, 1, 'Created academic group s6', '2026-07-25 20:24:17'),
 (8, 1, 'Opened academic period 2026 semester 2', '2026-07-27 10:36:17'),
-(9, 1, 'Created fee item tuition', '2026-07-27 10:38:15');
+(9, 1, 'Created fee item tuition', '2026-07-27 10:38:15'),
+(10, 1, 'Created academic group 23', '2026-09-08 14:00:31'),
+(11, 1, 'Created academic group cs', '2026-09-08 14:00:42'),
+(12, 1, 'Added subject networking', '2026-09-13 09:07:49'),
+(13, 1, 'Added subject biology', '2026-09-13 09:08:46'),
+(14, 1, 'Added subject physics', '2026-09-13 09:09:09'),
+(15, 1, 'Created grading system: primary school grading', '2026-09-13 19:59:51'),
+(16, 1, 'Added grading rule c6 to grading system ID: 1', '2026-09-13 20:00:45'),
+(17, 1, 'Deleted grading rule c6 from grading system ID: 1', '2026-09-13 20:01:32'),
+(18, 1, 'Added grading rule c5 to grading system ID: 1', '2026-09-13 20:08:42'),
+(19, 1, 'Added grading rule c6 to grading system ID: 1', '2026-09-13 20:09:52'),
+(20, 1, 'Added grading rule c4 to grading system ID: 1', '2026-09-13 20:11:18'),
+(21, 1, 'Added grading rule c3 to grading system ID: 1', '2026-09-13 20:12:28'),
+(22, 1, 'Added grading rule D2 to grading system ID: 1', '2026-09-13 20:13:54'),
+(23, 1, 'Added grading rule D1 to grading system ID: 1', '2026-09-13 20:14:56'),
+(24, 1, 'Activated grading system ID: 1', '2026-09-13 20:34:26');
 
 -- --------------------------------------------------------
 
@@ -211,7 +273,8 @@ CREATE TABLE `fee_items` (
 --
 
 INSERT INTO `fee_items` (`item_id`, `item_name`, `description`, `status`, `created_at`) VALUES
-(1, 'tuition', '', 'Active', '2026-07-27 10:38:15');
+(1, 'tuition', '', 'Active', '2026-07-27 10:38:15'),
+(2, 'food', 'none', 'Active', '2026-08-22 18:31:52');
 
 -- --------------------------------------------------------
 
@@ -226,9 +289,19 @@ CREATE TABLE `fee_payments` (
   `amount` decimal(10,2) NOT NULL,
   `payment_date` date NOT NULL,
   `payment_method` varchar(50) DEFAULT NULL,
+  `reference_number` varchar(100) DEFAULT NULL,
+  `notes` text DEFAULT NULL,
   `recorded_by` int(11) DEFAULT NULL,
   `created_at` timestamp NOT NULL DEFAULT current_timestamp()
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+--
+-- Dumping data for table `fee_payments`
+--
+
+INSERT INTO `fee_payments` (`payment_id`, `student_fee_id`, `receipt_number`, `amount`, `payment_date`, `payment_method`, `reference_number`, `notes`, `recorded_by`, `created_at`) VALUES
+(1, 1, 'REC-20260830082429', 900000.00, '2026-08-30', 'Cash', '21', 'half paid', NULL, '2026-08-30 06:24:29'),
+(2, 8, 'REC-20260910143225-9B8C10', 125000.00, '2026-09-10', 'Cash', '', '', 1, '2026-09-10 12:32:25');
 
 -- --------------------------------------------------------
 
@@ -244,6 +317,20 @@ CREATE TABLE `fee_structure` (
   `amount` decimal(10,2) NOT NULL,
   `created_at` timestamp NOT NULL DEFAULT current_timestamp()
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+--
+-- Dumping data for table `fee_structure`
+--
+
+INSERT INTO `fee_structure` (`structure_id`, `period_id`, `group_id`, `item_id`, `amount`, `created_at`) VALUES
+(1, 4, 1, 2, 100000.00, '2026-08-22 18:35:25'),
+(2, 4, 1, 1, 1000000.00, '2026-08-22 18:35:25'),
+(5, 5, 1, 2, 100000.00, '2026-09-08 13:29:55'),
+(6, 5, 1, 1, 200000.00, '2026-09-08 13:29:55'),
+(7, 5, 2, 2, 5000.00, '2026-09-10 12:29:47'),
+(8, 5, 2, 1, 120000.00, '2026-09-10 12:29:47'),
+(9, 5, 3, 2, 30000.00, '2026-09-10 12:30:08'),
+(10, 5, 3, 1, 3000000.00, '2026-09-10 12:30:08');
 
 -- --------------------------------------------------------
 
@@ -268,12 +355,62 @@ INSERT INTO `gallery` (`gallery_id`, `title`, `image`, `uploaded_at`) VALUES
 -- --------------------------------------------------------
 
 --
+-- Table structure for table `grading_rules`
+--
+
+CREATE TABLE `grading_rules` (
+  `rule_id` int(11) NOT NULL,
+  `grading_id` int(11) NOT NULL,
+  `grade` varchar(20) NOT NULL,
+  `min_mark` decimal(5,2) NOT NULL,
+  `max_mark` decimal(5,2) NOT NULL,
+  `points` decimal(5,2) DEFAULT NULL,
+  `remark` varchar(255) DEFAULT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+--
+-- Dumping data for table `grading_rules`
+--
+
+INSERT INTO `grading_rules` (`rule_id`, `grading_id`, `grade`, `min_mark`, `max_mark`, `points`, `remark`) VALUES
+(2, 1, 'c5', 50.00, 60.00, 3.00, 'fair'),
+(3, 1, 'c6', 0.00, 49.00, 2.00, 'poor'),
+(4, 1, 'c4', 61.00, 64.00, 4.00, 'fair'),
+(5, 1, 'c3', 65.00, 74.00, 5.00, 'good'),
+(6, 1, 'D2', 75.00, 80.00, 6.00, 'Excellent'),
+(7, 1, 'D1', 81.00, 100.00, 7.00, 'Excellent');
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `grading_systems`
+--
+
+CREATE TABLE `grading_systems` (
+  `grading_id` int(11) NOT NULL,
+  `name` varchar(100) NOT NULL,
+  `description` text DEFAULT NULL,
+  `status` enum('Active','Inactive') NOT NULL DEFAULT 'Active',
+  `created_at` timestamp NOT NULL DEFAULT current_timestamp()
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+--
+-- Dumping data for table `grading_systems`
+--
+
+INSERT INTO `grading_systems` (`grading_id`, `name`, `description`, `status`, `created_at`) VALUES
+(1, 'primary school grading', 'wwwwwww', 'Active', '2026-09-13 19:59:51');
+
+-- --------------------------------------------------------
+
+--
 -- Table structure for table `marks`
 --
 
 CREATE TABLE `marks` (
   `mark_id` int(11) NOT NULL,
   `student_id` int(11) DEFAULT NULL,
+  `academic_subject_id` int(11) DEFAULT NULL,
   `subject_id` int(11) DEFAULT NULL,
   `period_id` int(11) NOT NULL,
   `marks` int(11) DEFAULT NULL
@@ -283,31 +420,39 @@ CREATE TABLE `marks` (
 -- Dumping data for table `marks`
 --
 
-INSERT INTO `marks` (`mark_id`, `student_id`, `subject_id`, `period_id`, `marks`) VALUES
-(25, 5, 1, 2, 44),
-(26, 5, 2, 2, 89),
-(27, 5, 3, 2, 90),
-(28, 9, 1, 2, 77),
-(29, 9, 2, 2, 90),
-(30, 9, 3, 2, 90),
-(34, 5, 1, 3, 89),
-(35, 5, 2, 3, 89),
-(36, 5, 3, 3, 89),
-(37, 6, 1, 3, 78),
-(38, 6, 2, 3, 90),
-(39, 6, 3, 3, 78),
-(40, 7, 1, 3, 90),
-(41, 7, 2, 3, 90),
-(42, 7, 3, 3, 77),
-(43, 4, 1, 3, 67),
-(44, 4, 2, 3, 90),
-(45, 4, 3, 3, 78),
-(46, 9, 1, 3, 89),
-(47, 9, 2, 3, 89),
-(48, 9, 3, 3, 90),
-(49, 5, 1, 4, 90),
-(50, 5, 2, 4, 90),
-(51, 5, 3, 4, 90);
+INSERT INTO `marks` (`mark_id`, `student_id`, `academic_subject_id`, `subject_id`, `period_id`, `marks`) VALUES
+(25, 5, 5, 1, 2, 44),
+(26, 5, 7, 2, 2, 89),
+(27, 5, 9, 3, 2, 90),
+(28, 9, 11, 1, 2, 77),
+(29, 9, 14, 2, 2, 90),
+(30, 9, 17, 3, 2, 90),
+(34, 5, 2, 1, 3, 89),
+(35, 5, 3, 2, 3, 89),
+(36, 5, 4, 3, 3, 89),
+(37, 6, 2, 1, 3, 78),
+(38, 6, 3, 2, 3, 90),
+(39, 6, 4, 3, 3, 78),
+(40, 7, 2, 1, 3, 90),
+(41, 7, 3, 2, 3, 90),
+(42, 7, 4, 3, 3, 77),
+(43, 4, 2, 1, 3, 67),
+(44, 4, 3, 2, 3, 90),
+(45, 4, 4, 3, 3, 78),
+(46, 9, 12, 1, 3, 89),
+(47, 9, 15, 2, 3, 89),
+(48, 9, 18, 3, 3, 90),
+(49, 5, 6, 1, 4, 90),
+(50, 5, 8, 2, 4, 90),
+(51, 5, 10, 3, 4, 90),
+(52, 9, 13, 1, 5, 89),
+(53, 9, 16, 2, 5, 78),
+(54, 9, 19, 3, 5, 78),
+(55, 5, 1, 2, 5, 90),
+(56, 6, 1, 2, 5, 89),
+(57, 11, 1, 2, 5, 87),
+(58, 7, 1, 2, 5, 99),
+(59, 4, 1, 2, 5, 70);
 
 -- --------------------------------------------------------
 
@@ -320,6 +465,32 @@ CREATE TABLE `period_closing_settings` (
   `old_period_id` int(11) DEFAULT NULL,
   `new_period_id` int(11) DEFAULT NULL,
   `carry_balance` tinyint(4) DEFAULT 0,
+  `created_at` timestamp NOT NULL DEFAULT current_timestamp()
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `report_card_profiles`
+--
+
+CREATE TABLE `report_card_profiles` (
+  `profile_id` int(11) NOT NULL,
+  `profile_name` varchar(100) NOT NULL,
+  `education_level` varchar(50) NOT NULL,
+  `report_type` varchar(50) NOT NULL,
+  `grading_system_id` int(11) DEFAULT NULL,
+  `ranking_method` enum('Total Marks','Average','Aggregate','Total Points','GPA') NOT NULL DEFAULT 'Total Marks',
+  `show_marks` tinyint(1) NOT NULL DEFAULT 1,
+  `show_grade` tinyint(1) NOT NULL DEFAULT 1,
+  `show_points` tinyint(1) NOT NULL DEFAULT 0,
+  `show_remark` tinyint(1) NOT NULL DEFAULT 1,
+  `show_total` tinyint(1) NOT NULL DEFAULT 1,
+  `show_average` tinyint(1) NOT NULL DEFAULT 0,
+  `show_aggregate` tinyint(1) NOT NULL DEFAULT 0,
+  `show_division` tinyint(1) NOT NULL DEFAULT 0,
+  `show_position` tinyint(1) NOT NULL DEFAULT 1,
+  `status` enum('Active','Inactive') NOT NULL DEFAULT 'Active',
   `created_at` timestamp NOT NULL DEFAULT current_timestamp()
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
@@ -405,12 +576,13 @@ CREATE TABLE `students` (
 --
 
 INSERT INTO `students` (`student_id`, `reg_no`, `full_name`, `gender`, `class`, `stream`, `dob`, `admission_date`, `status`, `nationality`, `religion`, `parent_contact`, `parent_name`, `parent_email`, `parent_address`, `occupation`, `blood_group`, `allergies`, `medical_condition`, `previous_school`, `notes`, `photo`, `user_id`, `group_id`) VALUES
-(3, '234897/mn', 'wasswa martin', 'm', '23', 'd', '0000-00-00', NULL, 'Active', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 3, NULL),
-(4, '25/u/2956/Lcs', 'wasswa Martinz', 'Male', 's6', 'b4', NULL, NULL, 'Active', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL),
-(5, '234444', 'kato mark', 'Female', 's6', 'm1', NULL, NULL, 'Active', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL),
-(6, '25/u/2956/ics2', 'mathuas muwonge', 'Male', 's6', 'm1', '2002-10-31', '2027-11-21', 'Active', 'Ugandan', 'catholic', '070000000', 'anthony', 'wasswam634@gmail.com', 'wwwwwwwwwwwwwwwwwwwww', 'eeeeeeeeeeee', 'a', 'no', 'fine', 'wmmm p/s', 'not yet', '1784751870_images (1).jpeg', NULL, NULL),
-(7, '2344445', 'Wasswa Martin skelly', 'Female', 's6', 'b4', '2010-10-10', '2020-11-11', 'Active', 'kenyan', 'muslim', '0711111111', 'Wasswa Martin', 'wasswam634@gmail.com', 'eeeeeeeee', 'cook', 'ab', 'noo', 'fine', 'wmmm p/s', 'waaaaaaaaaaa', '1784752209_images.jpeg', NULL, NULL),
-(9, '25/u/23444', 'kenferd', 'Male', 'cs', 'b4', '2026-04-01', '2025-01-01', 'Active', 'Ugandan', 'catholic', '070000000', 'Wasswa Martin', 'wasswam634@gmail.com', 'kampala', 'cook', 'o', 'noo', 'fine', 'wmmm p/s', 'forms', '1784883078_images (2).jpeg', NULL, NULL);
+(3, '234897/mn', 'wasswa martin', 'm', '23', 'd', '0000-00-00', NULL, 'Active', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 3, 2),
+(4, '25/u/2956/Lcs', 'wasswa Martinz', 'Male', 's6', 'b4', NULL, NULL, 'Active', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 1),
+(5, '234444', 'kato mark', 'Female', 's6', 'm1', NULL, NULL, 'Active', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 1),
+(6, '25/u/2956/ics2', 'mathuas muwonge', 'Male', 's6', 'm1', '2002-10-31', '2027-11-21', 'Active', 'Ugandan', 'catholic', '070000000', 'anthony', 'wasswam634@gmail.com', 'wwwwwwwwwwwwwwwwwwwww', 'eeeeeeeeeeee', 'a', 'no', 'fine', 'wmmm p/s', 'not yet', '1784751870_images (1).jpeg', NULL, 1),
+(7, '2344445', 'Wasswa Martin skelly', 'Female', 's6', 'b4', '2010-10-10', '2020-11-11', 'Active', 'kenyan', 'muslim', '0711111111', 'Wasswa Martin', 'wasswam634@gmail.com', 'eeeeeeeee', 'cook', 'ab', 'noo', 'fine', 'wmmm p/s', 'waaaaaaaaaaa', '1784752209_images.jpeg', NULL, 1),
+(9, '25/u/23444', 'kenferd', 'Male', 'cs', 'b4', '2026-04-01', '2025-01-01', 'Active', 'Ugandan', 'catholic', '070000000', 'Wasswa Martin', 'wasswam634@gmail.com', 'kampala', 'cook', 'o', 'noo', 'fine', 'wmmm p/s', 'forms', '1784883078_images (2).jpeg', NULL, 3),
+(11, '1111111', 'wass amm', 'Male', 's6', 'b4', '2003-09-21', '2026-08-01', 'Active', '', 'catholic', '070000000', 'Wasswa Martin', 'wasswam634@gmail.com', 'ltnde', 'eeeeeeeeeeee', 'o', 'no', 'fine', 'wmmm p/s', 'none', '1787686640_6a8deef0ae8f7.jpg', NULL, 1);
 
 -- --------------------------------------------------------
 
@@ -429,6 +601,20 @@ CREATE TABLE `student_fees` (
   `status` enum('Pending','Partial','Cleared') DEFAULT 'Pending',
   `created_at` timestamp NOT NULL DEFAULT current_timestamp()
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+--
+-- Dumping data for table `student_fees`
+--
+
+INSERT INTO `student_fees` (`student_fee_id`, `student_id`, `period_id`, `total_amount`, `previous_balance`, `amount_paid`, `balance`, `status`, `created_at`) VALUES
+(1, 11, 4, 1100000.00, 0.00, 900000.00, -700000.00, 'Cleared', '2026-08-30 06:22:41'),
+(2, 11, 5, 300000.00, 0.00, 0.00, 300000.00, 'Pending', '2026-09-08 13:30:32'),
+(3, 4, 5, 300000.00, 0.00, 0.00, 300000.00, 'Pending', '2026-09-10 12:30:33'),
+(4, 5, 5, 300000.00, 0.00, 0.00, 300000.00, 'Pending', '2026-09-10 12:30:33'),
+(5, 6, 5, 300000.00, 0.00, 0.00, 300000.00, 'Pending', '2026-09-10 12:30:33'),
+(6, 7, 5, 300000.00, 0.00, 0.00, 300000.00, 'Pending', '2026-09-10 12:30:33'),
+(7, 9, 5, 3030000.00, 0.00, 0.00, 3030000.00, 'Pending', '2026-09-10 12:30:47'),
+(8, 3, 5, 125000.00, 0.00, 125000.00, 0.00, 'Cleared', '2026-09-10 12:31:01');
 
 -- --------------------------------------------------------
 
@@ -450,7 +636,10 @@ CREATE TABLE `subjects` (
 INSERT INTO `subjects` (`subject_id`, `group_id`, `subject_code`, `subject_name`) VALUES
 (1, NULL, '1ct', 'computer studies'),
 (2, NULL, 'math01', 'math'),
-(3, NULL, 'networking01', 'networking');
+(3, NULL, 'networking01', 'networking'),
+(4, 1, 'com03', 'networking'),
+(5, 1, 'bio01', 'biology'),
+(6, 1, 'phy01', 'physics');
 
 -- --------------------------------------------------------
 
@@ -557,7 +746,7 @@ INSERT INTO `vacancies` (`vacancy_id`, `title`, `department`, `description`, `de
 (2, 'vaaaaaaaaaaaaaaaaaaaa', 'vaaaaaaaaaaaaaaaaaaaa', 'vaaaaaaaaaaaaaaaaaaaavaaaaaaaaaaaaaaaaaaaavaaaaaaaaaaaaaaaaaaaa', '2222-02-22', 'open', '2026-07-19 11:43:52');
 
 -- --------------------------------------------------------
-9
+
 --
 -- Table structure for table `website_sections`
 --
@@ -763,13 +952,24 @@ CREATE TABLE `website_vacancies` (
 -- Indexes for table `academic_groups`
 --
 ALTER TABLE `academic_groups`
-  ADD PRIMARY KEY (`group_id`);
+  ADD PRIMARY KEY (`group_id`),
+  ADD KEY `fk_group_report_profile` (`report_profile_id`);
 
 --
 -- Indexes for table `academic_periods`
 --
 ALTER TABLE `academic_periods`
   ADD PRIMARY KEY (`period_id`);
+
+--
+-- Indexes for table `academic_subjects`
+--
+ALTER TABLE `academic_subjects`
+  ADD PRIMARY KEY (`academic_subject_id`),
+  ADD UNIQUE KEY `unique_period_group_subject` (`period_id`,`group_id`,`subject_id`),
+  ADD KEY `group_id` (`group_id`),
+  ADD KEY `subject_id` (`subject_id`),
+  ADD KEY `teacher_id` (`teacher_id`);
 
 --
 -- Indexes for table `announcements`
@@ -823,7 +1023,7 @@ ALTER TABLE `fee_payments`
 --
 ALTER TABLE `fee_structure`
   ADD PRIMARY KEY (`structure_id`),
-  ADD KEY `period_id` (`period_id`),
+  ADD UNIQUE KEY `unique_fee_structure` (`period_id`,`group_id`,`item_id`),
   ADD KEY `item_id` (`item_id`);
 
 --
@@ -833,17 +1033,39 @@ ALTER TABLE `gallery`
   ADD PRIMARY KEY (`gallery_id`);
 
 --
+-- Indexes for table `grading_rules`
+--
+ALTER TABLE `grading_rules`
+  ADD PRIMARY KEY (`rule_id`),
+  ADD KEY `fk_grading_rules_system` (`grading_id`);
+
+--
+-- Indexes for table `grading_systems`
+--
+ALTER TABLE `grading_systems`
+  ADD PRIMARY KEY (`grading_id`);
+
+--
 -- Indexes for table `marks`
 --
 ALTER TABLE `marks`
   ADD PRIMARY KEY (`mark_id`),
-  ADD UNIQUE KEY `unique_student_subject_period` (`student_id`,`subject_id`,`period_id`);
+  ADD UNIQUE KEY `unique_student_subject_period` (`student_id`,`subject_id`,`period_id`),
+  ADD UNIQUE KEY `unique_student_academic_subject` (`student_id`,`academic_subject_id`),
+  ADD KEY `fk_marks_academic_subject` (`academic_subject_id`);
 
 --
 -- Indexes for table `period_closing_settings`
 --
 ALTER TABLE `period_closing_settings`
   ADD PRIMARY KEY (`id`);
+
+--
+-- Indexes for table `report_card_profiles`
+--
+ALTER TABLE `report_card_profiles`
+  ADD PRIMARY KEY (`profile_id`),
+  ADD KEY `fk_report_profile_grading` (`grading_system_id`);
 
 --
 -- Indexes for table `results`
@@ -862,14 +1084,15 @@ ALTER TABLE `school_settings`
 --
 ALTER TABLE `students`
   ADD PRIMARY KEY (`student_id`),
-  ADD UNIQUE KEY `reg_no` (`reg_no`);
+  ADD UNIQUE KEY `reg_no` (`reg_no`),
+  ADD KEY `fk_student_group` (`group_id`);
 
 --
 -- Indexes for table `student_fees`
 --
 ALTER TABLE `student_fees`
   ADD PRIMARY KEY (`student_fee_id`),
-  ADD KEY `student_id` (`student_id`),
+  ADD UNIQUE KEY `unique_student_period` (`student_id`,`period_id`),
   ADD KEY `period_id` (`period_id`);
 
 --
@@ -954,13 +1177,19 @@ ALTER TABLE `website_vacancies`
 -- AUTO_INCREMENT for table `academic_groups`
 --
 ALTER TABLE `academic_groups`
-  MODIFY `group_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2;
+  MODIFY `group_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=4;
 
 --
 -- AUTO_INCREMENT for table `academic_periods`
 --
 ALTER TABLE `academic_periods`
-  MODIFY `period_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=5;
+  MODIFY `period_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=6;
+
+--
+-- AUTO_INCREMENT for table `academic_subjects`
+--
+ALTER TABLE `academic_subjects`
+  MODIFY `academic_subject_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=22;
 
 --
 -- AUTO_INCREMENT for table `announcements`
@@ -978,7 +1207,7 @@ ALTER TABLE `attendance`
 -- AUTO_INCREMENT for table `audit_logs`
 --
 ALTER TABLE `audit_logs`
-  MODIFY `log_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=10;
+  MODIFY `log_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=25;
 
 --
 -- AUTO_INCREMENT for table `faculties`
@@ -996,19 +1225,19 @@ ALTER TABLE `fees`
 -- AUTO_INCREMENT for table `fee_items`
 --
 ALTER TABLE `fee_items`
-  MODIFY `item_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2;
+  MODIFY `item_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=3;
 
 --
 -- AUTO_INCREMENT for table `fee_payments`
 --
 ALTER TABLE `fee_payments`
-  MODIFY `payment_id` int(11) NOT NULL AUTO_INCREMENT;
+  MODIFY `payment_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=3;
 
 --
 -- AUTO_INCREMENT for table `fee_structure`
 --
 ALTER TABLE `fee_structure`
-  MODIFY `structure_id` int(11) NOT NULL AUTO_INCREMENT;
+  MODIFY `structure_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=11;
 
 --
 -- AUTO_INCREMENT for table `gallery`
@@ -1017,16 +1246,34 @@ ALTER TABLE `gallery`
   MODIFY `gallery_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2;
 
 --
+-- AUTO_INCREMENT for table `grading_rules`
+--
+ALTER TABLE `grading_rules`
+  MODIFY `rule_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=8;
+
+--
+-- AUTO_INCREMENT for table `grading_systems`
+--
+ALTER TABLE `grading_systems`
+  MODIFY `grading_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2;
+
+--
 -- AUTO_INCREMENT for table `marks`
 --
 ALTER TABLE `marks`
-  MODIFY `mark_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=52;
+  MODIFY `mark_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=60;
 
 --
 -- AUTO_INCREMENT for table `period_closing_settings`
 --
 ALTER TABLE `period_closing_settings`
   MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
+
+--
+-- AUTO_INCREMENT for table `report_card_profiles`
+--
+ALTER TABLE `report_card_profiles`
+  MODIFY `profile_id` int(11) NOT NULL AUTO_INCREMENT;
 
 --
 -- AUTO_INCREMENT for table `results`
@@ -1044,19 +1291,19 @@ ALTER TABLE `school_settings`
 -- AUTO_INCREMENT for table `students`
 --
 ALTER TABLE `students`
-  MODIFY `student_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=11;
+  MODIFY `student_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=12;
 
 --
 -- AUTO_INCREMENT for table `student_fees`
 --
 ALTER TABLE `student_fees`
-  MODIFY `student_fee_id` int(11) NOT NULL AUTO_INCREMENT;
+  MODIFY `student_fee_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=9;
 
 --
 -- AUTO_INCREMENT for table `subjects`
 --
 ALTER TABLE `subjects`
-  MODIFY `subject_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=4;
+  MODIFY `subject_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=7;
 
 --
 -- AUTO_INCREMENT for table `teachers`
@@ -1129,6 +1376,21 @@ ALTER TABLE `website_vacancies`
 --
 
 --
+-- Constraints for table `academic_groups`
+--
+ALTER TABLE `academic_groups`
+  ADD CONSTRAINT `fk_group_report_profile` FOREIGN KEY (`report_profile_id`) REFERENCES `report_card_profiles` (`profile_id`) ON DELETE SET NULL ON UPDATE CASCADE;
+
+--
+-- Constraints for table `academic_subjects`
+--
+ALTER TABLE `academic_subjects`
+  ADD CONSTRAINT `academic_subjects_ibfk_1` FOREIGN KEY (`period_id`) REFERENCES `academic_periods` (`period_id`) ON UPDATE CASCADE,
+  ADD CONSTRAINT `academic_subjects_ibfk_2` FOREIGN KEY (`group_id`) REFERENCES `academic_groups` (`group_id`) ON UPDATE CASCADE,
+  ADD CONSTRAINT `academic_subjects_ibfk_3` FOREIGN KEY (`subject_id`) REFERENCES `subjects` (`subject_id`) ON UPDATE CASCADE,
+  ADD CONSTRAINT `academic_subjects_ibfk_4` FOREIGN KEY (`teacher_id`) REFERENCES `teachers` (`teacher_id`) ON DELETE SET NULL ON UPDATE CASCADE;
+
+--
 -- Constraints for table `attendance`
 --
 ALTER TABLE `attendance`
@@ -1153,6 +1415,30 @@ ALTER TABLE `fee_payments`
 ALTER TABLE `fee_structure`
   ADD CONSTRAINT `fee_structure_ibfk_1` FOREIGN KEY (`period_id`) REFERENCES `academic_periods` (`period_id`),
   ADD CONSTRAINT `fee_structure_ibfk_2` FOREIGN KEY (`item_id`) REFERENCES `fee_items` (`item_id`);
+
+--
+-- Constraints for table `grading_rules`
+--
+ALTER TABLE `grading_rules`
+  ADD CONSTRAINT `fk_grading_rules_system` FOREIGN KEY (`grading_id`) REFERENCES `grading_systems` (`grading_id`) ON DELETE CASCADE ON UPDATE CASCADE;
+
+--
+-- Constraints for table `marks`
+--
+ALTER TABLE `marks`
+  ADD CONSTRAINT `fk_marks_academic_subject` FOREIGN KEY (`academic_subject_id`) REFERENCES `academic_subjects` (`academic_subject_id`) ON UPDATE CASCADE;
+
+--
+-- Constraints for table `report_card_profiles`
+--
+ALTER TABLE `report_card_profiles`
+  ADD CONSTRAINT `fk_report_profile_grading` FOREIGN KEY (`grading_system_id`) REFERENCES `grading_systems` (`grading_id`) ON DELETE SET NULL ON UPDATE CASCADE;
+
+--
+-- Constraints for table `students`
+--
+ALTER TABLE `students`
+  ADD CONSTRAINT `fk_student_group` FOREIGN KEY (`group_id`) REFERENCES `academic_groups` (`group_id`);
 
 --
 -- Constraints for table `student_fees`
