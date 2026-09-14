@@ -2,7 +2,7 @@
 <div class="container">
 
 <a class="navbar-brand fw-bold" href="<?= BASE_URL ?>index.php">
-SCHOOL NAME
+SCHOOL WEBSITE
 </a>
 
 <button class="navbar-toggler"

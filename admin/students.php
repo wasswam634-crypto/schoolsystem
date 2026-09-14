@@ -16,7 +16,7 @@ $error = null;
 
 $groups = mysqli_query(
     $conn,
-    "SELECT group_id, group_name
+    "SELECT group_id, group_name, group_type
      FROM academic_groups
      WHERE status = 'Active'
      ORDER BY group_name ASC"
@@ -29,41 +29,58 @@ $groups = mysqli_query(
 
 if (isset($_POST['save'])) {
 
-    // Student information
+    // =================================================
+    // STUDENT INFORMATION
+    // =================================================
+
     $reg_no = trim($_POST['reg_no'] ?? '');
     $full_name = trim($_POST['full_name'] ?? '');
-    $gender = $_POST['gender'] ?? '';
-
-    // Academic information
-    $class = trim($_POST['class'] ?? '');
-    $stream = trim($_POST['stream'] ?? '');
-    $group_id = (int) ($_POST['group_id'] ?? 0);
-
-    // Academic group
-    $group_id = (int) ($_POST['group_id'] ?? 0);
+    $gender = trim($_POST['gender'] ?? '');
 
     $date_of_birth = $_POST['date_of_birth'] ?? '';
     $admission_date = $_POST['admission_date'] ?? '';
 
+    // =================================================
+    // ACADEMIC INFORMATION
+    // =================================================
+
+    $class = trim($_POST['class'] ?? '');
+    $stream = trim($_POST['stream'] ?? '');
+
+    // Academic group
+    $group_id = (int) ($_POST['group_id'] ?? 0);
+
     $status = $_POST['status'] ?? 'Active';
 
-    // Other student information
+    // =================================================
+    // OTHER STUDENT INFORMATION
+    // =================================================
+
     $nationality = trim($_POST['nationality'] ?? '');
     $religion = trim($_POST['religion'] ?? '');
 
-    // Parent information
+    // =================================================
+    // PARENT INFORMATION
+    // =================================================
+
     $parent_name = trim($_POST['parent_name'] ?? '');
     $parent_contact = trim($_POST['parent_contact'] ?? '');
     $parent_email = trim($_POST['parent_email'] ?? '');
     $parent_address = trim($_POST['parent_address'] ?? '');
     $occupation = trim($_POST['occupation'] ?? '');
 
-    // Medical information
+    // =================================================
+    // MEDICAL INFORMATION
+    // =================================================
+
     $blood_group = trim($_POST['blood_group'] ?? '');
     $allergies = trim($_POST['allergies'] ?? '');
     $medical_condition = trim($_POST['medical_condition'] ?? '');
 
-    // Other
+    // =================================================
+    // OTHER
+    // =================================================
+
     $previous_school = trim($_POST['previous_school'] ?? '');
     $notes = trim($_POST['notes'] ?? '');
 
@@ -87,121 +104,287 @@ if (isset($_POST['save'])) {
     } else {
 
 
-        // =============================================
-        // PHOTO UPLOAD
-        // =============================================
+        // =================================================
+        // VERIFY ACADEMIC GROUP EXISTS AND IS ACTIVE
+        // =================================================
 
-        $photo = null;
+        $group_stmt = mysqli_prepare(
+            $conn,
+            "SELECT group_id, group_name
+             FROM academic_groups
+             WHERE group_id = ?
+             AND status = 'Active'
+             LIMIT 1"
+        );
 
-        if (
-            isset($_FILES['photo']) &&
-            $_FILES['photo']['error'] === UPLOAD_ERR_OK
-        ) {
+        mysqli_stmt_bind_param(
+            $group_stmt,
+            "i",
+            $group_id
+        );
 
-            $upload_directory = "../uploads/students/";
+        mysqli_stmt_execute($group_stmt);
 
-            // Create folder if it doesn't exist
-            if (!is_dir($upload_directory)) {
-                mkdir($upload_directory, 0777, true);
+        $group_result = mysqli_stmt_get_result($group_stmt);
+
+        $selected_group = mysqli_fetch_assoc($group_result);
+
+        mysqli_stmt_close($group_stmt);
+
+
+        if (!$selected_group) {
+
+            $error = "The selected academic group does not exist or is inactive.";
+
+        } else {
+
+
+            // =================================================
+            // CHECK DUPLICATE REGISTRATION NUMBER
+            // =================================================
+
+            $check_stmt = mysqli_prepare(
+                $conn,
+                "SELECT student_id
+                 FROM students
+                 WHERE reg_no = ?
+                 LIMIT 1"
+            );
+
+            mysqli_stmt_bind_param(
+                $check_stmt,
+                "s",
+                $reg_no
+            );
+
+            mysqli_stmt_execute($check_stmt);
+
+            $check_result = mysqli_stmt_get_result($check_stmt);
+
+            $existing_student = mysqli_fetch_assoc($check_result);
+
+            mysqli_stmt_close($check_stmt);
+
+
+            if ($existing_student) {
+
+                $error = "A student with registration number "
+                       . e($reg_no)
+                       . " already exists.";
+
+            } else {
+
+
+                // =================================================
+                // PHOTO UPLOAD
+                // =================================================
+
+                $photo = null;
+
+                if (
+                    isset($_FILES['photo']) &&
+                    $_FILES['photo']['error'] === UPLOAD_ERR_OK
+                ) {
+
+                    $upload_directory = "../uploads/students/";
+
+                    // Create directory if it does not exist
+                    if (!is_dir($upload_directory)) {
+
+                        mkdir(
+                            $upload_directory,
+                            0777,
+                            true
+                        );
+                    }
+
+
+                    $original_name = basename(
+                        $_FILES['photo']['name']
+                    );
+
+                    $extension = strtolower(
+                        pathinfo(
+                            $original_name,
+                            PATHINFO_EXTENSION
+                        )
+                    );
+
+
+                    // Allowed image extensions
+                    $allowed_extensions = [
+                        'jpg',
+                        'jpeg',
+                        'png',
+                        'gif',
+                        'webp'
+                    ];
+
+
+                    if (
+                        !in_array(
+                            $extension,
+                            $allowed_extensions,
+                            true
+                        )
+                    ) {
+
+                        $error = "Invalid photo format. "
+                               . "Allowed formats: JPG, JPEG, PNG, GIF and WEBP.";
+
+                    } else {
+
+
+                        // Generate unique filename
+                        $photo =
+                            time()
+                            . '_'
+                            . uniqid()
+                            . '.'
+                            . $extension;
+
+
+                        if (
+                            !move_uploaded_file(
+                                $_FILES['photo']['tmp_name'],
+                                $upload_directory . $photo
+                            )
+                        ) {
+
+                            $error = "Failed to upload student photo.";
+
+                        }
+
+                    }
+
+                }
+
+
+                // =================================================
+                // INSERT STUDENT
+                // =================================================
+
+                if (!$error) {
+
+                    $stmt = mysqli_prepare(
+                        $conn,
+
+                        "INSERT INTO students (
+                            reg_no,
+                            full_name,
+                            gender,
+                            class,
+                            stream,
+                            dob,
+                            admission_date,
+                            status,
+                            nationality,
+                            religion,
+                            parent_name,
+                            parent_contact,
+                            parent_email,
+                            parent_address,
+                            occupation,
+                            photo,
+                            blood_group,
+                            allergies,
+                            medical_condition,
+                            previous_school,
+                            notes,
+                            group_id
+                        )
+                        VALUES (
+                            ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?,
+                            ?, ?, ?, ?, ?, ?, ?, ?, ?, ?
+                        )"
+                    );
+
+
+                    mysqli_stmt_bind_param(
+                        $stmt,
+                        "sssssssssssssssssssssi",
+                        $reg_no,
+                        $full_name,
+                        $gender,
+                        $class,
+                        $stream,
+                        $date_of_birth,
+                        $admission_date,
+                        $status,
+                        $nationality,
+                        $religion,
+                        $parent_name,
+                        $parent_contact,
+                        $parent_email,
+                        $parent_address,
+                        $occupation,
+                        $photo,
+                        $blood_group,
+                        $allergies,
+                        $medical_condition,
+                        $previous_school,
+                        $notes,
+                        $group_id
+                    );
+
+
+                    if (mysqli_stmt_execute($stmt)) {
+
+                        // Log activity
+                        log_activity(
+                            $conn,
+                            $_SESSION['user_id'],
+                            "Registered student "
+                            . $full_name
+                            . " ("
+                            . $reg_no
+                            . ") in academic group "
+                            . $selected_group['group_name']
+                        );
+
+
+                        $message =
+                            "Student registered successfully "
+                            . "under "
+                            . $selected_group['group_name']
+                            . ".";
+
+                    } else {
+
+                        $error =
+                            "Failed to register student: "
+                            . mysqli_error($conn);
+
+                    }
+
+
+                    mysqli_stmt_close($stmt);
+                }
+
             }
 
-
-            $original_name = basename($_FILES['photo']['name']);
-
-            $extension = strtolower(
-                pathinfo($original_name, PATHINFO_EXTENSION)
-            );
-
-
-            // Generate unique filename
-            $photo = time() . '_' . uniqid() . '.' . $extension;
-
-
-            move_uploaded_file(
-                $_FILES['photo']['tmp_name'],
-                $upload_directory . $photo
-            );
         }
 
-
-        // =============================================
-        // INSERT STUDENT
-        // =============================================
- 
-$stmt = mysqli_prepare(
-    $conn,
-
-    "INSERT INTO students (
-        reg_no,
-        full_name,
-        gender,
-        class,
-        stream,
-        dob,
-        admission_date,
-        status,
-        nationality,
-        religion,
-        parent_name,
-        parent_contact,
-        parent_email,
-        parent_address,
-        occupation,
-        photo,
-        blood_group,
-        allergies,
-        medical_condition,
-        previous_school,
-        notes,
-        group_id
-    )
-    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"
-);
-
-mysqli_stmt_bind_param(
-    $stmt,
-    "sssssssssssssssssssssi",
-    $reg_no,
-    $full_name,
-    $gender,
-    $class,
-    $stream,
-    $date_of_birth,
-    $admission_date,
-    $status,
-    $nationality,
-    $religion,
-    $parent_name,
-    $parent_contact,
-    $parent_email,
-    $parent_address,
-    $occupation,
-    $photo,
-    $blood_group,
-    $allergies,
-    $medical_condition,
-    $previous_school,
-    $notes,
-    $group_id
-);
-
-if (mysqli_stmt_execute($stmt)) {
-
-    $message = "Student registered successfully.";
-
-} else {
-
-    $error = mysqli_error($conn);
+    }
 
 }
 
-            mysqli_stmt_close($stmt);
-        }
-    }
 
+// =====================================================
+// GET ACTIVE ACADEMIC GROUPS AGAIN
+// =====================================================
+// This is important because a new group may have been
+// created before the page was submitted.
+
+$groups = mysqli_query(
+    $conn,
+    "SELECT group_id, group_name, group_type
+     FROM academic_groups
+     WHERE status = 'Active'
+     ORDER BY group_name ASC"
+);
 
 ?>
-
 
 <!DOCTYPE html>
 
@@ -308,6 +491,7 @@ if (mysqli_stmt_execute($stmt)) {
     type="text"
     name="reg_no"
     class="form-control"
+    value="<?= e($_POST['reg_no'] ?? '') ?>"
     required
 >
 
@@ -324,6 +508,7 @@ if (mysqli_stmt_execute($stmt)) {
     type="text"
     name="full_name"
     class="form-control"
+    value="<?= e($_POST['full_name'] ?? '') ?>"
     required
 >
 
@@ -341,11 +526,17 @@ if (mysqli_stmt_execute($stmt)) {
     class="form-control"
 >
 
-<option value="Male">
+<option value="Male"
+    <?= (($_POST['gender'] ?? '') === 'Male')
+        ? 'selected'
+        : '' ?>>
     Male
 </option>
 
-<option value="Female">
+<option value="Female"
+    <?= (($_POST['gender'] ?? '') === 'Female')
+        ? 'selected'
+        : '' ?>>
     Female
 </option>
 
@@ -364,6 +555,7 @@ if (mysqli_stmt_execute($stmt)) {
     type="date"
     name="date_of_birth"
     class="form-control"
+    value="<?= e($_POST['date_of_birth'] ?? '') ?>"
 >
 
 </div>
@@ -379,6 +571,7 @@ if (mysqli_stmt_execute($stmt)) {
     type="text"
     name="nationality"
     class="form-control"
+    value="<?= e($_POST['nationality'] ?? '') ?>"
 >
 
 </div>
@@ -394,6 +587,7 @@ if (mysqli_stmt_execute($stmt)) {
     type="text"
     name="religion"
     class="form-control"
+    value="<?= e($_POST['religion'] ?? '') ?>"
 >
 
 </div>
@@ -409,6 +603,7 @@ if (mysqli_stmt_execute($stmt)) {
     type="file"
     name="photo"
     class="form-control"
+    accept="image/*"
 >
 
 </div>
@@ -447,8 +642,14 @@ if (mysqli_stmt_execute($stmt)) {
     type="text"
     name="class"
     class="form-control"
+    value="<?= e($_POST['class'] ?? '') ?>"
     placeholder="Example: P4, S2, Year 1"
 >
+
+
+<small class="text-muted">
+    Enter the student's class or level.
+</small>
 
 </div>
 
@@ -465,6 +666,7 @@ if (mysqli_stmt_execute($stmt)) {
     type="text"
     name="stream"
     class="form-control"
+    value="<?= e($_POST['stream'] ?? '') ?>"
     placeholder="Example: East, Science"
 >
 
@@ -476,7 +678,11 @@ if (mysqli_stmt_execute($stmt)) {
 <div class="col-md-6 mb-3">
 
 <label class="form-label">
+
     Academic Group
+
+    <span class="text-danger">*</span>
+
 </label>
 
 
@@ -495,9 +701,19 @@ if (mysqli_stmt_execute($stmt)) {
 
 <option
     value="<?= (int) $group['group_id']; ?>"
+    <?= (
+        (int)($_POST['group_id'] ?? 0)
+        === (int)$group['group_id']
+    )
+        ? 'selected'
+        : ''
+    ?>
 >
 
     <?= e($group['group_name']); ?>
+
+    -
+    <?= e($group['group_type']); ?>
 
 </option>
 
@@ -505,6 +721,14 @@ if (mysqli_stmt_execute($stmt)) {
 
 
 </select>
+
+
+<small class="text-muted">
+
+    This determines which fee structure and fee account
+    applies to the student.
+
+</small>
 
 </div>
 
@@ -521,6 +745,7 @@ if (mysqli_stmt_execute($stmt)) {
     type="date"
     name="admission_date"
     class="form-control"
+    value="<?= e($_POST['admission_date'] ?? '') ?>"
 >
 
 </div>
@@ -539,11 +764,17 @@ if (mysqli_stmt_execute($stmt)) {
     class="form-control"
 >
 
-<option value="Active">
+<option value="Active"
+    <?= (($_POST['status'] ?? 'Active') === 'Active')
+        ? 'selected'
+        : '' ?>>
     Active
 </option>
 
-<option value="Inactive">
+<option value="Inactive"
+    <?= (($_POST['status'] ?? '') === 'Inactive')
+        ? 'selected'
+        : '' ?>>
     Inactive
 </option>
 
@@ -564,6 +795,7 @@ if (mysqli_stmt_execute($stmt)) {
     type="text"
     name="previous_school"
     class="form-control"
+    value="<?= e($_POST['previous_school'] ?? '') ?>"
 >
 
 </div>
@@ -600,6 +832,7 @@ if (mysqli_stmt_execute($stmt)) {
     type="text"
     name="parent_name"
     class="form-control"
+    value="<?= e($_POST['parent_name'] ?? '') ?>"
 >
 
 </div>
@@ -615,6 +848,7 @@ if (mysqli_stmt_execute($stmt)) {
     type="text"
     name="parent_contact"
     class="form-control"
+    value="<?= e($_POST['parent_contact'] ?? '') ?>"
 >
 
 </div>
@@ -630,6 +864,7 @@ if (mysqli_stmt_execute($stmt)) {
     type="email"
     name="parent_email"
     class="form-control"
+    value="<?= e($_POST['parent_email'] ?? '') ?>"
 >
 
 </div>
@@ -645,6 +880,7 @@ if (mysqli_stmt_execute($stmt)) {
     type="text"
     name="occupation"
     class="form-control"
+    value="<?= e($_POST['occupation'] ?? '') ?>"
 >
 
 </div>
@@ -659,7 +895,7 @@ if (mysqli_stmt_execute($stmt)) {
 <textarea
     name="parent_address"
     class="form-control"
-></textarea>
+><?= e($_POST['parent_address'] ?? '') ?></textarea>
 
 </div>
 
@@ -695,6 +931,7 @@ if (mysqli_stmt_execute($stmt)) {
     type="text"
     name="blood_group"
     class="form-control"
+    value="<?= e($_POST['blood_group'] ?? '') ?>"
 >
 
 </div>
@@ -710,6 +947,7 @@ if (mysqli_stmt_execute($stmt)) {
     type="text"
     name="allergies"
     class="form-control"
+    value="<?= e($_POST['allergies'] ?? '') ?>"
 >
 
 </div>
@@ -725,6 +963,7 @@ if (mysqli_stmt_execute($stmt)) {
     type="text"
     name="medical_condition"
     class="form-control"
+    value="<?= e($_POST['medical_condition'] ?? '') ?>"
 >
 
 </div>
@@ -757,7 +996,7 @@ if (mysqli_stmt_execute($stmt)) {
 <textarea
     name="notes"
     class="form-control"
-></textarea>
+><?= e($_POST['notes'] ?? '') ?></textarea>
 
 </div>
 
@@ -786,3 +1025,4 @@ if (mysqli_stmt_execute($stmt)) {
 </body>
 
 </html>
+

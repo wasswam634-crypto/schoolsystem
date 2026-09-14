@@ -8,179 +8,167 @@ require_role('admin');
 
 
 /*
-=================================
-FILTERS
-=================================
+|--------------------------------------------------------------------------
+| VALIDATE STUDENT FEE ACCOUNT
+|--------------------------------------------------------------------------
 */
 
-$search = $_GET['search'] ?? "";
+$student_fee_id = (int) ($_GET['student_fee_id'] ?? 0);
 
-$date_from = $_GET['date_from'] ?? "";
+if ($student_fee_id <= 0) {
 
-$date_to = $_GET['date_to'] ?? "";
-
-
-
-$where = [];
-
-
-
-if($search!=""){
-
-    $search=mysqli_real_escape_string(
-        $conn,
-        $search
-    );
-
-
-    $where[]="
-    (
-        students.full_name LIKE '%$search%'
-        OR students.reg_no LIKE '%$search%'
-        OR fee_payments.receipt_number LIKE '%$search%'
-    )
-    ";
-
+    die("Invalid student fee account.");
 }
-
-
-
-if($date_from!=""){
-
-    $where[]="
-    fee_payments.payment_date >= '$date_from'
-    ";
-
-}
-
-
-
-if($date_to!=""){
-
-    $where[]="
-    fee_payments.payment_date <= '$date_to'
-    ";
-
-}
-
-
-
-$where_sql="";
-
-
-if(count($where)>0){
-
-    $where_sql="WHERE ".implode(
-        " AND ",
-        $where
-    );
-
-}
-
-
 
 
 /*
-=================================
-GET PAYMENT HISTORY
-=================================
+|--------------------------------------------------------------------------
+| GET STUDENT FEE ACCOUNT
+|--------------------------------------------------------------------------
 */
 
+$stmt = mysqli_prepare(
+    $conn,
 
-$result=mysqli_query(
+    "SELECT
 
-$conn,
+        sf.student_fee_id,
+        sf.student_id,
+        sf.period_id,
+        sf.total_amount,
+        sf.previous_balance,
 
+        s.full_name,
+        s.reg_no,
+        s.class,
+        s.stream,
 
-"SELECT
+        ap.academic_year,
+        ap.period_name
 
+     FROM student_fees sf
 
-fee_payments.*,
+     INNER JOIN students s
+        ON sf.student_id = s.student_id
 
+     INNER JOIN academic_periods ap
+        ON sf.period_id = ap.period_id
 
-students.full_name,
+     WHERE sf.student_fee_id = ?
 
-students.reg_no,
-
-students.class,
-
-
-academic_periods.academic_year,
-
-academic_periods.period_name
-
-
-
-FROM fee_payments
-
-
-
-JOIN student_fees
-
-ON fee_payments.student_fee_id =
-student_fees.student_fee_id
-
-
-
-JOIN students
-
-ON student_fees.student_id =
-students.student_id
-
-
-
-JOIN academic_periods
-
-ON student_fees.period_id =
-academic_periods.period_id
-
-
-
-$where_sql
-
-
-ORDER BY payment_id DESC"
-
+     LIMIT 1"
 );
 
 
+if (!$stmt) {
 
+    die(
+        "Database error: "
+        . mysqli_error($conn)
+    );
+}
+
+
+mysqli_stmt_bind_param(
+    $stmt,
+    "i",
+    $student_fee_id
+);
+
+
+mysqli_stmt_execute($stmt);
+
+
+$result = mysqli_stmt_get_result($stmt);
+
+
+$account = mysqli_fetch_assoc($result);
+
+
+mysqli_stmt_close($stmt);
+
+
+if (!$account) {
+
+    die("Student fee account not found.");
+}
 
 
 /*
-TOTAL COLLECTION
+|--------------------------------------------------------------------------
+| GET ALL PAYMENTS
+|--------------------------------------------------------------------------
 */
 
+$payment_stmt = mysqli_prepare(
+    $conn,
 
-$total=mysqli_query(
+    "SELECT
 
-$conn,
+        payment_id,
+        receipt_number,
+        amount,
+        payment_date,
+        payment_method,
+        reference_number,
+        notes,
+        recorded_by
 
+     FROM fee_payments
 
-"SELECT SUM(amount) AS total
+     WHERE student_fee_id = ?
 
-FROM fee_payments
-
-$where_sql"
-
+     ORDER BY payment_date ASC, payment_id ASC"
 );
 
 
-$total_row=mysqli_fetch_assoc($total);
+mysqli_stmt_bind_param(
+    $payment_stmt,
+    "i",
+    $student_fee_id
+);
 
-$total_amount=$total_row['total'] ?? 0;
+
+mysqli_stmt_execute($payment_stmt);
 
 
+$payments_result =
+    mysqli_stmt_get_result($payment_stmt);
+
+
+/*
+|--------------------------------------------------------------------------
+| CALCULATE TOTALS
+|--------------------------------------------------------------------------
+*/
+
+$total_fees =
+    (float) $account['total_amount'];
+
+
+$previous_balance =
+    (float) $account['previous_balance'];
+
+
+$total_owed =
+    $total_fees + $previous_balance;
+
+
+$total_paid = 0;
 
 ?>
-
-
 
 <!DOCTYPE html>
 
 <html>
 
 <head>
+
+<meta charset="UTF-8">
+
+<meta
+name="viewport"
+content="width=device-width, initial-scale=1">
 
 
 <title>
@@ -189,38 +177,11 @@ Payment History
 
 
 <link
-
 href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css"
-
 rel="stylesheet">
 
 
-<style>
-
-
-body{
-
-background:#f5f6fa;
-
-}
-
-
-.card{
-
-border:none;
-
-border-radius:15px;
-
-box-shadow:0 4px 15px rgba(0,0,0,.08);
-
-}
-
-
-</style>
-
-
 </head>
-
 
 
 <body>
@@ -229,21 +190,31 @@ box-shadow:0 4px 15px rgba(0,0,0,.08);
 <div class="container-fluid p-4">
 
 
+<div class="d-flex justify-content-between align-items-center mb-4">
 
-<div class="d-flex justify-content-between">
 
+<div>
 
 <h2>
+
 💳 Payment History
+
 </h2>
 
+<p class="text-muted mb-0">
+
+Complete payment history for this student's fee account.
+
+</p>
+
+</div>
 
 
-<a href="fee_payments.php"
+<a
+href="fee_payments.php"
+class="btn btn-secondary">
 
-class="btn btn-primary">
-
-Receive Payment
+← Back to Fee Payments
 
 </a>
 
@@ -251,104 +222,83 @@ Receive Payment
 </div>
 
 
-
-
-<div class="alert alert-success mt-3">
-
-Total Collected:
-
-<strong>
-
-UGX <?=number_format($total_amount);?>
-
-</strong>
-
-</div>
-
-
-
-
+<!--
+|--------------------------------------------------------------------------
+| STUDENT INFORMATION
+|--------------------------------------------------------------------------
+-->
 
 <div class="card mb-4">
 
 
+<div class="card-header bg-dark text-white">
+
+Student Information
+
+</div>
+
+
 <div class="card-body">
-
-
-<form method="GET">
 
 
 <div class="row">
 
 
-<div class="col-md-4">
-
-
-<input
-
-class="form-control"
-
-name="search"
-
-placeholder="Search student or receipt"
-
-value="<?=e($search);?>">
-
-
-</div>
-
-
-
-
 <div class="col-md-3">
 
+<strong>Student</strong>
 
-<input
+<br>
 
-type="date"
-
-class="form-control"
-
-name="date_from"
-
-value="<?=e($date_from);?>">
-
+<?= e($account['full_name']); ?>
 
 </div>
-
-
-
-
-<div class="col-md-3">
-
-
-<input
-
-type="date"
-
-class="form-control"
-
-name="date_to"
-
-value="<?=e($date_to);?>">
-
-
-</div>
-
-
 
 
 <div class="col-md-2">
 
+<strong>Reg. No.</strong>
 
-<button
+<br>
 
-class="btn btn-dark w-100">
+<?= e($account['reg_no']); ?>
 
-Filter
+</div>
 
-</button>
 
+<div class="col-md-2">
+
+<strong>Class</strong>
+
+<br>
+
+<?= e($account['class']); ?>
+
+</div>
+
+
+<div class="col-md-2">
+
+<strong>Stream</strong>
+
+<br>
+
+<?= e($account['stream'] ?? ''); ?>
+
+</div>
+
+
+<div class="col-md-3">
+
+<strong>Academic Period</strong>
+
+<br>
+
+<?= e($account['academic_year']); ?>
+
+-
+
+<?= e($account['period_name']); ?>
 
 </div>
 
@@ -356,27 +306,168 @@ Filter
 </div>
 
 
-</form>
-
+</div>
 
 </div>
 
 
-</div>
+<!--
+|--------------------------------------------------------------------------
+| FEE SUMMARY
+|--------------------------------------------------------------------------
+-->
+
+<div class="row mb-4">
 
 
+<div class="col-md-3">
 
 
-
-
-
-<div class="card">
+<div class="card border-primary">
 
 
 <div class="card-body">
 
 
-<table class="table table-bordered table-striped">
+<h6>
+New Period Fees
+</h6>
+
+
+<h4>
+
+UGX <?= number_format($total_fees, 2); ?>
+
+</h4>
+
+
+</div>
+
+</div>
+
+
+</div>
+
+
+<div class="col-md-3">
+
+
+<div class="card border-warning">
+
+
+<div class="card-body">
+
+
+<h6>
+Previous Balance
+</h6>
+
+
+<h4>
+
+UGX <?= number_format(
+    $previous_balance,
+    2
+); ?>
+
+</h4>
+
+
+</div>
+
+</div>
+
+
+</div>
+
+
+<div class="col-md-3">
+
+
+<div class="card border-success">
+
+
+<div class="card-body">
+
+
+<h6>
+Total Owed
+</h6>
+
+
+<h4>
+
+UGX <?= number_format(
+    $total_owed,
+    2
+); ?>
+
+</h4>
+
+
+</div>
+
+</div>
+
+
+</div>
+
+
+<div class="col-md-3">
+
+
+<div class="card border-danger">
+
+
+<div class="card-body">
+
+
+<h6>
+Current Balance
+</h6>
+
+
+<h4 id="currentBalance">
+
+UGX 0.00
+
+</h4>
+
+
+</div>
+
+</div>
+
+
+</div>
+
+
+</div>
+
+
+<!--
+|--------------------------------------------------------------------------
+| PAYMENT HISTORY
+|--------------------------------------------------------------------------
+-->
+
+<div class="card">
+
+
+<div class="card-header bg-primary text-white">
+
+Payment History
+
+</div>
+
+
+<div class="card-body">
+
+
+<div class="table-responsive">
+
+
+<table class="table table-bordered table-striped align-middle">
 
 
 <thead class="table-dark">
@@ -384,51 +475,21 @@ Filter
 
 <tr>
 
+<th>#</th>
 
-<th>
-Receipt
-</th>
+<th>Date</th>
 
+<th>Receipt Number</th>
 
-<th>
-Student
-</th>
+<th>Payment Method</th>
 
+<th>Reference</th>
 
-<th>
-Class
-</th>
+<th>Amount Paid</th>
 
+<th>Running Balance</th>
 
-<th>
-Period
-</th>
-
-
-<th>
-Amount
-</th>
-
-
-<th>
-Method
-</th>
-
-
-<th>
-Reference
-</th>
-
-
-<th>
-Date
-</th>
-
-
-<th>
-Action
-</th>
-
+<th>Action</th>
 
 </tr>
 
@@ -436,139 +497,253 @@ Action
 </thead>
 
 
-
 <tbody>
 
 
+<?php
 
-<?php while($row=mysqli_fetch_assoc($result)): ?>
+$counter = 1;
+
+$running_balance = $total_owed;
+
+
+while (
+    $payment =
+    mysqli_fetch_assoc($payments_result)
+):
+
+
+    $payment_amount =
+        (float) $payment['amount'];
+
+
+    $total_paid +=
+        $payment_amount;
+
+
+    $running_balance -=
+        $payment_amount;
+
+
+    if ($running_balance < 0) {
+
+        $running_balance = 0;
+
+    }
+
+?>
 
 
 <tr>
 
 
-
 <td>
 
-<?=e($row['receipt_number']);?>
+<?= $counter++; ?>
 
 </td>
 
 
-
-
-
 <td>
 
-<?=e($row['full_name']);?>
-
-<br>
-
-<small>
-
-<?=e($row['reg_no']);?>
-
-</small>
-
+<?= e($payment['payment_date']); ?>
 
 </td>
 
 
-
-
-
-
 <td>
 
-<?=e($row['class']);?>
+<strong>
+
+<?= e(
+    $payment['receipt_number']
+); ?>
+
+</strong>
 
 </td>
 
 
-
-
-
 <td>
 
-<?=$row['academic_year'];?>
-
--
-
-<?=$row['period_name'];?>
+<?= e(
+    $payment['payment_method']
+    ?: 'Not specified'
+); ?>
 
 </td>
 
 
-
-
-
 <td>
 
-UGX <?=number_format($row['amount']);?>
+<?= e(
+    $payment['reference_number']
+    ?: '-'
+); ?>
 
 </td>
 
 
+<td class="text-success fw-bold">
 
-
-
-<td>
-
-<?=e($row['payment_method']);?>
-
-</td>
-
-
-
-
-
-<td>
-
-<?=e($row['reference_number']);?>
+UGX
+<?= number_format(
+    $payment_amount,
+    2
+); ?>
 
 </td>
 
 
+<td class="fw-bold">
 
-
-
-<td>
-
-<?=e($row['payment_date']);?>
+UGX
+<?= number_format(
+    $running_balance,
+    2
+); ?>
 
 </td>
 
 
-
-
-
 <td>
+
+
 <a
+href="payment_receipt.php?id=<?= (int) $payment['payment_id']; ?>"
+class="btn btn-dark btn-sm">
 
-href="payment_receipt.php?id=<?=$row['payment_id'];?>"
-
-class="btn btn-success btn-sm">
-
-🖨 Receipt
+🧾 Receipt
 
 </a>
+
 
 </td>
 
 
 </tr>
 
+
 <?php endwhile; ?>
 
+
+<?php
+
+$current_balance =
+    $total_owed - $total_paid;
+
+
+if ($current_balance < 0) {
+
+    $current_balance = 0;
+
+}
+
+?>
+
+
+<?php if ($counter === 1): ?>
+
+
+<tr>
+
+
+<td colspan="8"
+class="text-center text-muted">
+
+No payments have been recorded for this account.
+
+</td>
+
+
+</tr>
+
+
+<?php endif; ?>
 
 
 </tbody>
 
 
+<tfoot class="table-light">
+
+
+<tr>
+
+
+<th colspan="5"
+class="text-end">
+
+TOTAL PAID:
+
+</th>
+
+
+<th class="text-success">
+
+UGX
+<?= number_format(
+    $total_paid,
+    2
+); ?>
+
+</th>
+
+
+<th>
+
+UGX
+<?= number_format(
+    $current_balance,
+    2
+); ?>
+
+</th>
+
+
+<th>
+
+<?php if ($current_balance <= 0): ?>
+
+<span class="badge bg-success">
+
+CLEARED
+
+</span>
+
+
+<?php elseif ($total_paid > 0): ?>
+
+<span class="badge bg-warning text-dark">
+
+PARTIAL
+
+</span>
+
+
+<?php else: ?>
+
+<span class="badge bg-danger">
+
+PENDING
+
+</span>
+
+<?php endif; ?>
+
+
+</th>
+
+
+</tr>
+
+
+</tfoot>
+
+
 </table>
 
 
-
 </div>
 
 
@@ -576,9 +751,30 @@ class="btn btn-success btn-sm">
 
 
 </div>
+
+
+</div>
+
+
+<script>
+
+/*
+|--------------------------------------------------------------------------
+| DISPLAY CURRENT BALANCE
+|--------------------------------------------------------------------------
+*/
+
+document.getElementById(
+    "currentBalance"
+).textContent =
+    "UGX <?= number_format(
+        $current_balance,
+        2
+    ); ?>";
+
+</script>
 
 
 </body>
-
 
 </html>

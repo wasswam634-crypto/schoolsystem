@@ -16,98 +16,153 @@ $message = "";
 $message_type = "success";
 
 
-// Save group
+// =====================================================
+// SAVE GROUP
+// =====================================================
 
-if(isset($_POST['save_group'])){
+if (isset($_POST['save_group'])) {
 
-
-    $group_name = trim($_POST['group_name']);
-    $group_type = trim($_POST['group_type']);
-
-
-    // Check duplicate
-
-    $check = mysqli_prepare(
-        $conn,
-        "SELECT group_id 
-         FROM academic_groups
-         WHERE group_name=?"
-    );
+    $group_name = trim($_POST['group_name'] ?? '');
+    $group_type = trim($_POST['group_type'] ?? '');
 
 
-    mysqli_stmt_bind_param(
-        $check,
-        "s",
-        $group_name
-    );
+    // =================================================
+    // VALIDATION
+    // =================================================
 
+    if ($group_name === '') {
 
-    mysqli_stmt_execute($check);
-
-
-    $result = mysqli_stmt_get_result($check);
-
-
-
-    if(mysqli_num_rows($result) > 0){
-
-
-        $message = "This group already exists.";
+        $message = "Group name is required.";
         $message_type = "danger";
 
+    } elseif ($group_type === '') {
 
-    }else{
+        $message = "Please select a group type.";
+        $message_type = "danger";
+
+    } else {
 
 
-        $stmt = mysqli_prepare(
+        // =============================================
+        // CHECK DUPLICATE
+        // =============================================
+
+        $check = mysqli_prepare(
             $conn,
-            "INSERT INTO academic_groups
-            (
-                group_name,
-                group_type,
-                status
-            )
-            VALUES
-            (?,?, 'Active')"
+            "SELECT group_id
+             FROM academic_groups
+             WHERE LOWER(TRIM(group_name)) = LOWER(TRIM(?))
+             LIMIT 1"
         );
-
 
         mysqli_stmt_bind_param(
-            $stmt,
-            "ss",
-            $group_name,
-            $group_type
+            $check,
+            "s",
+            $group_name
         );
 
+        mysqli_stmt_execute($check);
+
+        $result = mysqli_stmt_get_result($check);
 
 
-        if(mysqli_stmt_execute($stmt)){
+        if (mysqli_num_rows($result) > 0) {
+
+            $message = "This academic group already exists.";
+            $message_type = "danger";
+
+        } else {
 
 
-            log_activity(
+            // =========================================
+            // INSERT GROUP
+            // =========================================
+
+            $stmt = mysqli_prepare(
                 $conn,
-                $_SESSION['user_id'],
-                "Created academic group ".$group_name
+
+                "INSERT INTO academic_groups
+                (
+                    group_name,
+                    group_type,
+                    status
+                )
+                VALUES
+                (?, ?, 'Active')"
             );
 
 
-            $message = "Academic group created successfully.";
+            mysqli_stmt_bind_param(
+                $stmt,
+                "ss",
+                $group_name,
+                $group_type
+            );
 
 
-        }else{
+            if (mysqli_stmt_execute($stmt)) {
+
+                log_activity(
+                    $conn,
+                    $_SESSION['user_id'],
+                    "Created academic group " . $group_name
+                );
 
 
-            $message = "Failed to create group.";
-            $message_type = "danger";
+                $message =
+                    "Academic group '"
+                    . e($group_name)
+                    . "' created successfully.";
 
+                $message_type = "success";
+
+            } else {
+
+                $message =
+                    "Failed to create academic group: "
+                    . mysqli_error($conn);
+
+                $message_type = "danger";
+            }
+
+
+            mysqli_stmt_close($stmt);
         }
 
 
+        mysqli_stmt_close($check);
     }
-
 }
 
 
+// =====================================================
+// GET GROUPS WITH STUDENT COUNTS
+// =====================================================
+
+$groups = mysqli_query(
+    $conn,
+
+    "SELECT
+        g.group_id,
+        g.group_name,
+        g.group_type,
+        g.status,
+        COUNT(s.student_id) AS student_count
+
+     FROM academic_groups g
+
+     LEFT JOIN students s
+        ON s.group_id = g.group_id
+        AND s.status = 'Active'
+
+     GROUP BY
+        g.group_id,
+        g.group_name,
+        g.group_type,
+        g.status
+
+     ORDER BY g.group_id DESC"
+);
 
 ?>
 
@@ -125,16 +180,20 @@ if(isset($_POST['save_group'])){
 
 
 <h2 class="mb-4">
-Academic Groups
+    Academic Groups
 </h2>
 
 
 
-<?php if($message): ?>
+<!-- =====================================================
+     MESSAGE
+====================================================== -->
 
-<div class="alert alert-<?= $message_type ?>">
+<?php if ($message): ?>
 
-<?= e($message); ?>
+<div class="alert alert-<?= e($message_type); ?>">
+
+    <?= $message; ?>
 
 </div>
 
@@ -142,14 +201,16 @@ Academic Groups
 
 
 
-
+<!-- =====================================================
+     ADD GROUP
+====================================================== -->
 
 <div class="card shadow">
 
 
 <div class="card-header bg-primary text-white">
 
-Add Class / Course / Department
+    Add Class / Course / Department
 
 </div>
 
@@ -163,63 +224,73 @@ Add Class / Course / Department
 <div class="row">
 
 
+<!-- GROUP NAME -->
+
 <div class="col-md-5">
 
 <label class="form-label">
 
-Group Name
+    Group Name
 
 </label>
 
 
 <input
+    type="text"
+    name="group_name"
+    class="form-control"
+    placeholder="Example: S6, 23, CS"
+    required
+>
 
-type="text"
 
-name="group_name"
+<small class="text-muted">
 
-class="form-control"
+    Enter the actual class or academic group name.
 
-placeholder="Example: Senior 1"
-
-required>
+</small>
 
 </div>
 
 
 
+<!-- GROUP TYPE -->
 
 <div class="col-md-4">
 
 
 <label class="form-label">
 
-Group Type
+    Group Type
 
 </label>
 
 
 <select
-
-name="group_type"
-
-class="form-control"
-
-required>
+    name="group_type"
+    class="form-control"
+    required
+>
 
 
 <option value="Class">
-Class
+
+    Class
+
 </option>
 
 
 <option value="Course">
-Course
+
+    Course
+
 </option>
 
 
 <option value="Department">
-Department
+
+    Department
+
 </option>
 
 
@@ -230,17 +301,18 @@ Department
 
 
 
+<!-- SAVE -->
 
 <div class="col-md-3 d-flex align-items-end">
 
 
 <button
+    type="submit"
+    class="btn btn-success w-100"
+    name="save_group"
+>
 
-class="btn btn-success w-100"
-
-name="save_group">
-
-Save Group
+    Save Group
 
 </button>
 
@@ -256,32 +328,35 @@ Save Group
 
 </div>
 
-
 </div>
 
 
 
-
-
+<!-- =====================================================
+     EXISTING GROUPS
+====================================================== -->
 
 <div class="card shadow mt-4">
 
 
 <div class="card-header bg-dark text-white">
 
-Existing Groups
+    Existing Groups
 
 </div>
-
 
 
 <div class="card-body">
 
 
-<table class="table table-bordered">
+<div class="table-responsive">
+
+
+<table class="table table-bordered table-hover">
 
 
 <thead>
+
 
 <tr>
 
@@ -291,9 +366,12 @@ Existing Groups
 
 <th>Type</th>
 
+<th>Students</th>
+
 <th>Status</th>
 
 </tr>
+
 
 </thead>
 
@@ -301,22 +379,14 @@ Existing Groups
 <tbody>
 
 
+<?php if ($groups && mysqli_num_rows($groups) > 0): ?>
+
+
 <?php
-
-
-$groups = mysqli_query(
-    $conn,
-    "SELECT *
-     FROM academic_groups
-     ORDER BY group_id DESC"
-);
-
 
 $count = 1;
 
-
-while($row=mysqli_fetch_assoc($groups)){
-
+while ($row = mysqli_fetch_assoc($groups)):
 
 ?>
 
@@ -325,40 +395,65 @@ while($row=mysqli_fetch_assoc($groups)){
 
 
 <td>
-<?= $count++; ?>
-</td>
 
+    <?= $count++; ?>
 
-<td>
-<?= e($row['group_name']); ?>
-</td>
-
-
-<td>
-<?= e($row['group_type']); ?>
 </td>
 
 
 <td>
 
+    <strong>
 
-<?php if($row['status']=="Active"){ ?>
+        <?= e($row['group_name']); ?>
+
+    </strong>
+
+</td>
+
+
+<td>
+
+    <?= e($row['group_type']); ?>
+
+</td>
+
+
+<td>
+
+    <span class="badge bg-info">
+
+        <?= (int)$row['student_count']; ?>
+
+    </span>
+
+</td>
+
+
+<td>
+
+
+<?php if ($row['status'] === "Active"): ?>
 
 
 <span class="badge bg-success">
-Active
+
+    Active
+
 </span>
 
 
-<?php }else{ ?>
+<?php else: ?>
 
 
 <span class="badge bg-secondary">
-Inactive
+
+    Inactive
+
 </span>
 
 
-<?php } ?>
+<?php endif; ?>
 
 
 </td>
@@ -367,7 +462,27 @@ Inactive
 </tr>
 
 
-<?php } ?>
+<?php endwhile; ?>
+
+
+<?php else: ?>
+
+
+<tr>
+
+<td
+    colspan="5"
+    class="text-center text-muted"
+>
+
+    No academic groups have been created yet.
+
+</td>
+
+</tr>
+
+
+<?php endif; ?>
 
 
 </tbody>
@@ -381,11 +496,11 @@ Inactive
 
 </div>
 
+</div>
 
 
 
 </div>
-
 
 </div>
 

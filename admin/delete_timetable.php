@@ -16,18 +16,19 @@ require_role('admin');
 
 if (isset($_POST['delete_timetable'])) {
 
+
+    $period_id = (int) ($_POST['period_id'] ?? 0);
+
     $class = trim($_POST['class'] ?? '');
-    $year  = trim($_POST['year'] ?? '');
-    $term  = trim($_POST['term'] ?? '');
 
 
     /*
     |--------------------------------------------------------------------------
-    | Validate details
+    | VALIDATION
     |--------------------------------------------------------------------------
     */
 
-    if ($class === '' || $year === '' || $term === '') {
+    if ($period_id <= 0 || $class === '') {
 
         set_error("Invalid timetable details.");
 
@@ -37,7 +38,7 @@ if (isset($_POST['delete_timetable'])) {
 
     /*
     |--------------------------------------------------------------------------
-    | Delete timetable
+    | DELETE
     |--------------------------------------------------------------------------
     */
 
@@ -45,26 +46,44 @@ if (isset($_POST['delete_timetable'])) {
         $conn,
 
         "DELETE FROM timetables
-         WHERE class = ?
-         AND academic_year = ?
-         AND term = ?"
+         WHERE period_id = ?
+         AND class = ?"
     );
 
 
     mysqli_stmt_bind_param(
         $stmt,
-        "sss",
-        $class,
-        $year,
-        $term
+        "is",
+        $period_id,
+        $class
     );
 
 
     if (mysqli_stmt_execute($stmt)) {
 
-        set_success("Timetable deleted successfully.");
+
+        /*
+        |--------------------------------------------------------------------------
+        | CHECK WHETHER ANY ROWS WERE DELETED
+        |--------------------------------------------------------------------------
+        */
+
+        if (mysqli_stmt_affected_rows($stmt) > 0) {
+
+            set_success(
+                "Timetable for " . $class . " deleted successfully."
+            );
+
+        } else {
+
+            set_error(
+                "No matching timetable was found."
+            );
+        }
+
 
     } else {
+
 
         set_error(
             "Failed to delete timetable: "
@@ -75,12 +94,17 @@ if (isset($_POST['delete_timetable'])) {
 
     /*
     |--------------------------------------------------------------------------
-    | Redirect after POST
+    | REDIRECT AFTER POST
     |--------------------------------------------------------------------------
     */
 
     redirect("timetables.php");
 }
+
+
+set_error("Invalid request.");
+
+redirect("timetables.php");
 
 ?>
 ```
