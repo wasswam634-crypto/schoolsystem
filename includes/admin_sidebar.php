@@ -284,6 +284,21 @@
 
             </li>
 
+            <li class="nav-item mb-1">
+
+                <a
+                    href="../admin/report_profiles.php"
+                    class="nav-link text-white rounded"
+                >
+
+                    <i class="fas fa-chart-bar me-2"></i>
+
+                    Set report card template
+
+                </a>
+
+            </li>
+
 
             <!-- REPORT CARDS -->
 
@@ -370,33 +385,7 @@
 
 
 
-            <!-- =================================================
-                 COMMUNICATION
-            ================================================== -->
-
-            <div class="text-uppercase text-secondary small fw-bold mt-3 mb-2">
-
-                Communication
-
-            </div>
-
-
-            <!-- ANNOUNCEMENTS -->
-
-            <li class="nav-item mb-1">
-
-                <a
-                    href="../admin/announcements.php"
-                    class="nav-link text-white rounded"
-                >
-
-                    <i class="fas fa-bullhorn me-2"></i>
-
-                    Announcements
-
-                </a>
-
-            </li>
+            
 
 
 
@@ -411,43 +400,15 @@
             </div>
 
 
-            <!-- GALLERY -->
+            
 
-            <li class="nav-item mb-1">
-
-                <a
-                    href="../admin/gallery.php"
-                    class="nav-link text-white rounded"
-                >
-
-                    <i class="fas fa-images me-2"></i>
-
-                    Gallery
-
-                </a>
-
-            </li>
+            
 
 
-            <!-- VACANCIES -->
-
-            <li class="nav-item mb-1">
-
-                <a
-                    href="../admin/vacancies.php"
-                    class="nav-link text-white rounded"
-                >
-
-                    <i class="fas fa-briefcase me-2"></i>
-
-                    Vacancies
-
-                </a>
-
-            </li>
+            
 
 
-            <!-- WEBSITE MANAGEMENT -->
+            
 
             <li class="nav-item mb-1">
 
