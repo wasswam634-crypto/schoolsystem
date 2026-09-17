@@ -70,7 +70,9 @@
         <ul class="nav flex-column">
 
 
-            <!-- DASHBOARD -->
+            <!-- =================================================
+                 DASHBOARD
+            ================================================== -->
 
             <li class="nav-item mb-1">
 
@@ -99,7 +101,7 @@
             </div>
 
 
-            <!-- REGISTER / STUDENTS -->
+            <!-- STUDENTS -->
 
             <li class="nav-item mb-1">
 
@@ -117,7 +119,7 @@
             </li>
 
 
-            <!-- VIEW STUDENTS -->
+            <!-- STUDENT LIST -->
 
             <li class="nav-item mb-1">
 
@@ -135,24 +137,6 @@
             </li>
 
 
-            <!-- ACADEMIC GROUPS -->
-
-            <li class="nav-item mb-1">
-
-                <a
-                    href="../admin/academic_groups.php"
-                    class="nav-link text-white rounded"
-                >
-
-                    <i class="fas fa-layer-group me-2"></i>
-
-                    Academic Groups
-
-                </a>
-
-            </li>
-
-
             <!-- =================================================
                  ACADEMIC MANAGEMENT
             ================================================== -->
@@ -162,58 +146,6 @@
                 Academic Management
 
             </div>
-
-
-            <!-- TEACHERS -->
-
-            <li class="nav-item mb-1">
-
-                <a
-                    href="../admin/teachers.php"
-                    class="nav-link text-white rounded"
-                >
-
-                    <i class="fas fa-chalkboard-teacher me-2"></i>
-
-                    Teachers
-
-                </a>
-
-            </li>
-
-
-            <!-- SUBJECTS -->
-
-            <li class="nav-item mb-1">
-
-                <a
-                    href="../admin/subjects.php"
-                    class="nav-link text-white rounded"
-                >
-
-                    <i class="fas fa-book me-2"></i>
-
-                    Add new Subjects
-
-                </a>
-
-            </li>
-
-            <li class="nav-item mb-1">
-
-                <a
-                    href="../admin/academic_subjects.php"
-                    class="nav-link text-white rounded"
-                >
-
-                    <i class="fas fa-book me-2"></i>
-
-                    Subjects
-
-                </a>
-
-            </li>
-
 
             <!-- TIMETABLE -->
 
@@ -233,24 +165,6 @@
             </li>
 
 
-            <!-- ACADEMIC PERIODS -->
-
-            <li class="nav-item mb-1">
-
-                <a
-                    href="../admin/academic_periods.php"
-                    class="nav-link text-white rounded"
-                >
-
-                    <i class="fas fa-calendar-check me-2"></i>
-
-                    Academic Periods
-
-                </a>
-
-            </li>
-
-
             <!-- MARKS -->
 
             <li class="nav-item mb-1">
@@ -263,37 +177,6 @@
                     <i class="fas fa-chart-bar me-2"></i>
 
                     Marks
-
-                </a>
-
-            </li>
-             
-
-            <li class="nav-item mb-1">
-
-                <a
-                    href="../admin/grading.php"
-                    class="nav-link text-white rounded"
-                >
-
-                    <i class="fas fa-chart-bar me-2"></i>
-
-                    Set grading scale
-
-                </a>
-
-            </li>
-
-            <li class="nav-item mb-1">
-
-                <a
-                    href="../admin/report_profiles.php"
-                    class="nav-link text-white rounded"
-                >
-
-                    <i class="fas fa-chart-bar me-2"></i>
-
-                    Set report card template
 
                 </a>
 
@@ -318,7 +201,6 @@
             </li>
 
 
-
             <!-- =================================================
                  FINANCE
             ================================================== -->
@@ -328,42 +210,6 @@
                 Finance
 
             </div>
-
-
-            <!-- FEE STRUCTURE -->
-
-            <li class="nav-item mb-1">
-
-                <a
-                    href="../admin/fee_structure.php"
-                    class="nav-link text-white rounded"
-                >
-
-                    <i class="fas fa-money-bill-wave me-2"></i>
-
-                    Fee Structure
-
-                </a>
-
-            </li>
-
-
-            <!-- GENERATE STUDENT FEES -->
-
-            <li class="nav-item mb-1">
-
-                <a
-                    href="../admin/generate_student_fees.php"
-                    class="nav-link text-white rounded"
-                >
-
-                    <i class="fas fa-file-invoice-dollar me-2"></i>
-
-                    Student Fee Accounts
-
-                </a>
-
-            </li>
 
 
             <!-- FEE PAYMENTS -->
@@ -384,11 +230,6 @@
             </li>
 
 
-
-            
-
-
-
             <!-- =================================================
                  SCHOOL WEBSITE
             ================================================== -->
@@ -400,15 +241,7 @@
             </div>
 
 
-            
-
-            
-
-
-            
-
-
-            
+            <!-- WEBSITE MANAGEMENT -->
 
             <li class="nav-item mb-1">
 
@@ -424,7 +257,9 @@
                 </a>
 
             </li>
-           
+
+
+            <!-- VIEW WEBSITE -->
 
             <li class="nav-item mb-1">
 
@@ -442,7 +277,6 @@
             </li>
 
 
-
             <!-- =================================================
                  SYSTEM
             ================================================== -->
@@ -452,60 +286,6 @@
                 System
 
             </div>
-
-
-            <!-- BACKUP -->
-
-            <li class="nav-item mb-1">
-
-                <a
-                    href="../admin/backup.php"
-                    class="nav-link text-white rounded"
-                >
-
-                    <i class="fas fa-download me-2"></i>
-
-                    Backup Database
-
-                </a>
-
-            </li>
-
-
-            <!-- RESTORE -->
-
-            <li class="nav-item mb-1">
-
-                <a
-                    href="../admin/restore.php"
-                    class="nav-link text-white rounded"
-                >
-
-                    <i class="fas fa-upload me-2"></i>
-
-                    Restore Database
-
-                </a>
-
-            </li>
-
-
-            <!-- AUDIT LOGS -->
-
-            <li class="nav-item mb-1">
-
-                <a
-                    href="../admin/audit_logs.php"
-                    class="nav-link text-white rounded"
-                >
-
-                    <i class="fas fa-history me-2"></i>
-
-                    Audit Logs
-
-                </a>
-
-            </li>
 
 
             <!-- SETTINGS -->
@@ -585,6 +365,5 @@
         color: #ff6b6b !important;
 
     }
-
 
 </style>

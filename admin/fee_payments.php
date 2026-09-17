@@ -1407,15 +1407,13 @@ Pending
 <?php if ($balance > 0): ?>
 
 
-<button
-type="button"
-class="btn btn-success btn-sm w-100"
-data-bs-toggle="modal"
-data-bs-target="#<?= e($modal_id); ?>">
+<a
+    href="receive_payment.php?student_fee_id=<?= e($row['student_fee_id']); ?>"
+    class="btn btn-success btn-sm w-100">
 
-💰 Receive Payment
+    💰 Receive Payment
 
-</button>
+</a>
 
 
 <!--

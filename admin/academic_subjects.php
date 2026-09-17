@@ -1,4 +1,3 @@
-```php
 <?php
 
 include '../database/connection.php';
@@ -22,6 +21,7 @@ if (isset($_POST['save'])) {
     $period_id  = (int) ($_POST['period_id'] ?? 0);
     $group_id   = (int) ($_POST['group_id'] ?? 0);
     $subject_id = (int) ($_POST['subject_id'] ?? 0);
+
     $teacher_id = !empty($_POST['teacher_id'])
                     ? (int) $_POST['teacher_id']
                     : null;
@@ -41,11 +41,13 @@ if (isset($_POST['save'])) {
 
         /*
         |--------------------------------------------------------------------------
-        | CHECK FOR DUPLICATE ASSIGNMENT
+        | CHECK WHETHER THIS SUBJECT ALREADY EXISTS
         |--------------------------------------------------------------------------
         |
-        | The same subject cannot be assigned twice to the same
-        | class/group in the same academic period.
+        | We do NOT simply reject an existing assignment.
+        |
+        | If the subject already exists for this period and group, we update
+        | its teacher instead.
         |
         */
 
@@ -73,14 +75,95 @@ if (isset($_POST['save'])) {
 
         if (mysqli_num_rows($check_result) > 0) {
 
-            $error = "This subject has already been assigned to this class/group for this academic period.";
+            /*
+            |--------------------------------------------------------------------------
+            | EXISTING ASSIGNMENT FOUND
+            |--------------------------------------------------------------------------
+            |
+            | Instead of creating another record, update the teacher.
+            |
+            */
+
+            $existing = mysqli_fetch_assoc($check_result);
+
+            $academic_subject_id = (int) $existing['academic_subject_id'];
+
+
+            if ($teacher_id === null) {
+
+                /*
+                |--------------------------------------------------------------
+                | Remove teacher assignment
+                |--------------------------------------------------------------
+                */
+
+                $stmt = mysqli_prepare(
+                    $conn,
+                    "UPDATE academic_subjects
+                     SET teacher_id = NULL,
+                         status = 'Active'
+                     WHERE academic_subject_id = ?"
+                );
+
+                mysqli_stmt_bind_param(
+                    $stmt,
+                    "i",
+                    $academic_subject_id
+                );
+
+            } else {
+
+                /*
+                |--------------------------------------------------------------
+                | Assign / change teacher
+                |--------------------------------------------------------------
+                */
+
+                $stmt = mysqli_prepare(
+                    $conn,
+                    "UPDATE academic_subjects
+                     SET teacher_id = ?,
+                         status = 'Active'
+                     WHERE academic_subject_id = ?"
+                );
+
+                mysqli_stmt_bind_param(
+                    $stmt,
+                    "ii",
+                    $teacher_id,
+                    $academic_subject_id
+                );
+            }
+
+
+            if (mysqli_stmt_execute($stmt)) {
+
+                if ($teacher_id === null) {
+
+                    $message = "Subject assignment updated successfully. The teacher assignment was removed.";
+
+                } else {
+
+                    $message = "Teacher assignment updated successfully.";
+                }
+
+            } else {
+
+                $error = "Unable to update subject assignment: " . mysqli_error($conn);
+            }
+
+
+            mysqli_stmt_close($stmt);
 
         } else {
 
             /*
             |--------------------------------------------------------------------------
-            | INSERT ASSIGNMENT
+            | NO EXISTING ASSIGNMENT
             |--------------------------------------------------------------------------
+            |
+            | This is a completely new subject assignment, so create it.
+            |
             */
 
             if ($teacher_id === null) {
@@ -145,15 +228,22 @@ if (isset($_POST['save'])) {
             mysqli_stmt_close($stmt);
         }
 
+
         mysqli_stmt_close($check);
     }
 }
-
 
 /*
 |--------------------------------------------------------------------------
 | REMOVE SUBJECT ASSIGNMENT
 |--------------------------------------------------------------------------
+|
+| Historical/inactive academic periods:
+| - Delete marks first
+| - Then delete the academic subject assignment
+|
+| Active academic periods are protected.
+|
 */
 
 if (isset($_GET['delete'])) {
@@ -162,32 +252,206 @@ if (isset($_GET['delete'])) {
 
     if ($academic_subject_id > 0) {
 
-        $stmt = mysqli_prepare(
+        /*
+        |--------------------------------------------------------------------------
+        | GET THE ACADEMIC SUBJECT AND ITS PERIOD
+        |--------------------------------------------------------------------------
+        */
+
+        $check = mysqli_prepare(
             $conn,
-            "DELETE FROM academic_subjects
-             WHERE academic_subject_id = ?"
+            "SELECT
+                a.academic_subject_id,
+                a.period_id,
+                p.academic_year,
+                p.period_name
+             FROM academic_subjects a
+
+             INNER JOIN academic_periods p
+                ON a.period_id = p.period_id
+
+             WHERE a.academic_subject_id = ?
+             LIMIT 1"
         );
 
         mysqli_stmt_bind_param(
-            $stmt,
+            $check,
             "i",
             $academic_subject_id
         );
 
-        if (mysqli_stmt_execute($stmt)) {
+        mysqli_stmt_execute($check);
 
-            $message = "Subject assignment removed successfully.";
+        $result = mysqli_stmt_get_result($check);
+
+        if (mysqli_num_rows($result) === 0) {
+
+            $error = "The subject assignment could not be found.";
 
         } else {
 
-            $error = "Unable to remove subject assignment: " . mysqli_error($conn);
+            $assignment = mysqli_fetch_assoc($result);
+
+            $period_id = (int) $assignment['period_id'];
+
+            /*
+            |--------------------------------------------------------------------------
+            | CHECK WHETHER THE ACADEMIC PERIOD IS ACTIVE
+            |--------------------------------------------------------------------------
+            |
+            | We determine the status from the period dates.
+            |
+            | If today's date is within the period, it is considered active.
+            |
+            */
+
+            $today = date('Y-m-d');
+
+            $period_check = mysqli_prepare(
+                $conn,
+                "SELECT start_date, end_date
+                 FROM academic_periods
+                 WHERE period_id = ?
+                 LIMIT 1"
+            );
+
+            mysqli_stmt_bind_param(
+                $period_check,
+                "i",
+                $period_id
+            );
+
+            mysqli_stmt_execute($period_check);
+
+            $period_result = mysqli_stmt_get_result($period_check);
+
+            $period = mysqli_fetch_assoc($period_result);
+
+            mysqli_stmt_close($period_check);
+
+
+            /*
+            |--------------------------------------------------------------------------
+            | PROTECT CURRENT/ACTIVE PERIOD
+            |--------------------------------------------------------------------------
+            */
+
+            if (
+                $today >= $period['start_date'] &&
+                $today <= $period['end_date']
+            ) {
+
+                $error =
+                    "This subject cannot be deleted because the academic period "
+                    . $assignment['academic_year']
+                    . " - "
+                    . $assignment['period_name']
+                    . " is currently active.";
+
+            } else {
+
+                /*
+                |--------------------------------------------------------------------------
+                | BEGIN TRANSACTION
+                |--------------------------------------------------------------------------
+                */
+
+                mysqli_begin_transaction($conn);
+
+                try {
+
+                    /*
+                    |--------------------------------------------------------------------------
+                    | DELETE MARKS FIRST
+                    |--------------------------------------------------------------------------
+                    */
+
+                    $delete_marks = mysqli_prepare(
+                        $conn,
+                        "DELETE FROM marks
+                         WHERE academic_subject_id = ?"
+                    );
+
+                    mysqli_stmt_bind_param(
+                        $delete_marks,
+                        "i",
+                        $academic_subject_id
+                    );
+
+                    if (!mysqli_stmt_execute($delete_marks)) {
+
+                        throw new Exception(
+                            "Unable to delete marks: "
+                            . mysqli_error($conn)
+                        );
+                    }
+
+                    mysqli_stmt_close($delete_marks);
+
+
+                    /*
+                    |--------------------------------------------------------------------------
+                    | DELETE ACADEMIC SUBJECT
+                    |--------------------------------------------------------------------------
+                    */
+
+                    $delete_subject = mysqli_prepare(
+                        $conn,
+                        "DELETE FROM academic_subjects
+                         WHERE academic_subject_id = ?"
+                    );
+
+                    mysqli_stmt_bind_param(
+                        $delete_subject,
+                        "i",
+                        $academic_subject_id
+                    );
+
+                    if (!mysqli_stmt_execute($delete_subject)) {
+
+                        throw new Exception(
+                            "Unable to delete subject assignment: "
+                            . mysqli_error($conn)
+                        );
+                    }
+
+                    mysqli_stmt_close($delete_subject);
+
+
+                    /*
+                    |--------------------------------------------------------------------------
+                    | EVERYTHING SUCCESSFUL
+                    |--------------------------------------------------------------------------
+                    */
+
+                    mysqli_commit($conn);
+
+                    $message =
+                        "Subject assignment and its historical marks were "
+                        . "successfully deleted from "
+                        . $assignment['academic_year']
+                        . " - "
+                        . $assignment['period_name']
+                        . ".";
+
+                } catch (Exception $e) {
+
+                    /*
+                    |--------------------------------------------------------------------------
+                    | SOMETHING FAILED
+                    |--------------------------------------------------------------------------
+                    */
+
+                    mysqli_rollback($conn);
+
+                    $error = $e->getMessage();
+                }
+            }
         }
 
-        mysqli_stmt_close($stmt);
+        mysqli_stmt_close($check);
     }
 }
-
-
 /*
 |--------------------------------------------------------------------------
 | GET ACADEMIC PERIODS
@@ -488,10 +752,13 @@ $assignments = mysqli_query(
                     <div class="col-md-6 mb-3">
 
                         <label class="form-label">
+
                             Teacher
+
                             <span class="text-muted">
                                 (Optional)
                             </span>
+
                         </label>
 
                         <select
